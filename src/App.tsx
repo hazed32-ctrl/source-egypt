@@ -49,6 +49,7 @@ const AppContent = () => {
     <>
       <LoadingScreen isLoading={isLoading} minDuration={1000} />
       <RouteLoadingHandler />
+      <CompareBar />
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Index />} />
@@ -59,6 +60,7 @@ const AppContent = () => {
         <Route path="/projects/:id" element={<Projects />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/about" element={<About />} />
+        <Route path="/compare" element={<Compare />} />
         
         {/* Client Portal Routes */}
         <Route
