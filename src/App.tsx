@@ -184,13 +184,15 @@ const App = () => (
     <LanguageProvider>
       <AuthProvider>
         <LoadingProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <AppContent />
-            </BrowserRouter>
-          </TooltipProvider>
+          <CompareProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <AppContent />
+              </BrowserRouter>
+            </TooltipProvider>
+          </CompareProvider>
         </LoadingProvider>
       </AuthProvider>
     </LanguageProvider>

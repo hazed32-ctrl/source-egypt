@@ -107,7 +107,7 @@ const Compare = () => {
     if (value === null || value === undefined) return '—';
     if (key === 'progress_percent') return `${value}%`;
     if (key === 'status') {
-      return t(`property.status.${value}`, value);
+      return t(`property.status.${value}` as const);
     }
     return String(value);
   };
