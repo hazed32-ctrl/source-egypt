@@ -212,7 +212,7 @@ const Compare = () => {
                   {/* Status Badge */}
                   <div className="absolute top-4 left-4">
                     <Badge className={`badge-${property.status} text-xs`}>
-                      {t(`property.status.${property.status}`, property.status)}
+                      {t(`property.status.${property.status}` as const)}
                     </Badge>
                   </div>
                 </div>
