@@ -349,7 +349,6 @@ const PropertyDetails = () => {
                   <Phone className="w-5 h-5" />
                   {t('property.call')}
                 </Button>
-                </Button>
                 <Button variant="outline" className="w-full h-12 text-base gap-2 border-border/50 hover:border-primary/50">
                   <Download className="w-5 h-5" />
                   {t('property.brochure')}
