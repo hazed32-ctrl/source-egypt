@@ -7,9 +7,11 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LoadingProvider, useLoading } from "@/contexts/LoadingContext";
+import { CompareProvider } from "@/contexts/CompareContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import LoadingScreen from "@/components/loading/LoadingScreen";
 import RouteLoadingHandler from "@/components/loading/RouteLoadingHandler";
+import CompareBar from "@/components/compare/CompareBar";
 import "@/lib/i18n";
 
 // Public Pages
