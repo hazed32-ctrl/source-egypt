@@ -7,9 +7,11 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { LoadingProvider, useLoading } from "@/contexts/LoadingContext";
+import { CompareProvider } from "@/contexts/CompareContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import LoadingScreen from "@/components/loading/LoadingScreen";
 import RouteLoadingHandler from "@/components/loading/RouteLoadingHandler";
+import CompareBar from "@/components/compare/CompareBar";
 import "@/lib/i18n";
 
 // Public Pages
@@ -21,6 +23,7 @@ import Projects from "./pages/Projects";
 import Contact from "./pages/Contact";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
+import Compare from "./pages/Compare";
 
 // Client Portal Pages (lazy loaded)
 const ClientDashboard = lazy(() => import("./pages/client/Dashboard"));
@@ -46,6 +49,7 @@ const AppContent = () => {
     <>
       <LoadingScreen isLoading={isLoading} minDuration={1000} />
       <RouteLoadingHandler />
+      <CompareBar />
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Index />} />
@@ -56,6 +60,7 @@ const AppContent = () => {
         <Route path="/projects/:id" element={<Projects />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/about" element={<About />} />
+        <Route path="/compare" element={<Compare />} />
         
         {/* Client Portal Routes */}
         <Route
@@ -179,13 +184,15 @@ const App = () => (
     <LanguageProvider>
       <AuthProvider>
         <LoadingProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <AppContent />
-            </BrowserRouter>
-          </TooltipProvider>
+          <CompareProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <AppContent />
+              </BrowserRouter>
+            </TooltipProvider>
+          </CompareProvider>
         </LoadingProvider>
       </AuthProvider>
     </LanguageProvider>
