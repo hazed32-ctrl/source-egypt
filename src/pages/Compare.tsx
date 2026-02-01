@@ -83,7 +83,7 @@ const Compare = () => {
         const validData = data || [];
         const orderedData = ids
           .map(id => validData.find(p => p.id === id))
-          .filter((p): p is Property => p !== undefined);
+          .filter((p): p is NonNullable<typeof p> => p !== undefined);
         
         setProperties(orderedData);
       } catch (err) {
