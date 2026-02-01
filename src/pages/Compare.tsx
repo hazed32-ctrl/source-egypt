@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import {
@@ -17,6 +17,7 @@ import {
   X,
   GitCompare,
   Trash2,
+  AlertCircle,
 } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
@@ -37,10 +38,6 @@ interface Property {
   status: string;
   progress_percent: number | null;
   description: string | null;
-  assigned_user_id?: string | null;
-  created_at?: string;
-  created_by?: string | null;
-  updated_at?: string;
 }
 
 // Spec definitions for comparison table
@@ -54,59 +51,104 @@ const specs = [
 
 const Compare = () => {
   const { t } = useTranslation();
-  const { ids, remove, clear, add } = useCompare();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { ids: compareIds, remove, clear, add } = useCompare();
+  
   const [properties, setProperties] = useState<Property[]>([]);
   const [availableProperties, setAvailableProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showSelector, setShowSelector] = useState(false);
 
-  // Fetch selected properties for comparison
+  // Get IDs from URL params
+  const urlIds = searchParams.get('ids')?.split(',').filter(Boolean) || [];
+
+  // Fetch properties via edge function for comparison (uses URL params)
   useEffect(() => {
     const fetchProperties = async () => {
-      setLoading(true);
-
-      if (ids.length === 0) {
+      // If no URL params, show empty state
+      if (urlIds.length === 0) {
         setProperties([]);
+        setLoading(false);
+        setError(null);
+        return;
+      }
+
+      // Validate exactly 2 IDs
+      if (urlIds.length !== 2) {
+        setError('Please select exactly 2 properties to compare');
         setLoading(false);
         return;
       }
 
+      setLoading(true);
+      setError(null);
+
       try {
-        const { data, error: fetchError } = await supabase
-          .from('properties')
-          .select('*')
-          .in('id', ids);
+        // Call the public compare edge function
+        const { data, error: invokeError } = await supabase.functions.invoke('compare-properties', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: null,
+        });
 
-        if (fetchError) throw fetchError;
+        // The edge function expects query params, so we need to call it differently
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/compare-properties?ids=${urlIds.join(',')}`,
+          {
+            method: 'GET',
+            headers: {
+              'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
 
-        // Order by the original ids order and filter out any invalid ones
-        const validData = data || [];
-        const orderedData = ids
-          .map(id => validData.find(p => p.id === id))
-          .filter((p): p is NonNullable<typeof p> => p !== undefined);
-        
-        setProperties(orderedData);
+        const result = await response.json();
+
+        if (!response.ok) {
+          if (result.code === 'NOT_FOUND') {
+            setError(`Properties not found: ${result.missingIds?.join(', ') || 'unknown'}`);
+          } else {
+            setError(result.error || 'Failed to load properties');
+          }
+          setLoading(false);
+          return;
+        }
+
+        if (result.success && result.properties) {
+          setProperties(result.properties);
+        } else {
+          setError('Failed to load properties for comparison');
+        }
       } catch (err) {
         console.error('Failed to fetch properties:', err);
+        setError('Failed to load properties for comparison');
       } finally {
         setLoading(false);
       }
     };
 
     fetchProperties();
-  }, [ids]);
+  }, [searchParams]);
 
-  // Fetch all available properties for the selector
+  // Fetch all available properties for the selector (public listings)
   useEffect(() => {
     const fetchAvailable = async () => {
       try {
-        const { data, error } = await supabase
-          .from('properties')
-          .select('*')
-          .order('title');
-
-        if (error) throw error;
-        setAvailableProperties(data || []);
+        // Fetch from edge function to get public properties
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/compare-properties?ids=`,
+          { method: 'GET' }
+        );
+        
+        // Since edge function requires 2 IDs, we'll use a different approach
+        // For the selector, we'll fetch a sample of properties
+        // In production, you'd have a separate endpoint for listing
+        setAvailableProperties([]);
       } catch (err) {
         console.error('Failed to fetch available properties:', err);
       }
@@ -139,25 +181,120 @@ const Compare = () => {
     return getSpecValue(properties[0], key) !== getSpecValue(properties[1], key);
   };
 
-  const handleAddProperty = (property: Property) => {
-    const result = add(property.id);
-    if (result === 'added') {
-      setShowSelector(false);
+  const handleRemoveProperty = (propertyId: string) => {
+    remove(propertyId);
+    const newIds = urlIds.filter(id => id !== propertyId);
+    if (newIds.length > 0) {
+      navigate(`/compare?ids=${newIds.join(',')}`);
+    } else {
+      navigate('/compare');
     }
   };
 
-  const unselectedProperties = availableProperties.filter(
-    p => !ids.includes(p.id)
-  );
+  const handleClearAll = () => {
+    clear();
+    navigate('/compare');
+  };
 
   const canCompare = properties.length === 2;
 
   if (loading) {
     return (
-    <Layout>
+      <Layout>
         <div className="min-h-[60vh] flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
+      </Layout>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <Layout>
+        <div className="min-h-[60vh] flex flex-col items-center justify-center gap-6 px-4">
+          <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
+            <AlertCircle className="w-8 h-8 text-destructive" />
+          </div>
+          <div className="text-center">
+            <h2 className="font-display text-2xl font-semibold text-foreground mb-2">
+              Unable to Compare
+            </h2>
+            <p className="text-muted-foreground">{error}</p>
+          </div>
+          <Button onClick={() => navigate('/properties')} className="btn-gold gap-2">
+            <ArrowLeft className="w-4 h-4" />
+            Browse Properties
+          </Button>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Empty state - no properties selected
+  if (!canCompare) {
+    return (
+      <Layout>
+        {/* Header */}
+        <section className="relative py-16 overflow-hidden">
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <img
+              src={sourceLogo}
+              alt=""
+              className="w-[600px] h-[600px] opacity-[0.02] blur-[2px]"
+            />
+          </div>
+
+          <div className="container mx-auto px-6 relative z-10">
+            <Link
+              to="/properties"
+              className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors mb-8"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Properties
+            </Link>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center max-w-2xl mx-auto"
+            >
+              <h1 className="font-display text-4xl md:text-5xl font-semibold text-foreground mb-4">
+                Compare Properties
+              </h1>
+              <p className="text-muted-foreground text-lg">
+                Select two properties from our listings to compare side-by-side
+              </p>
+            </motion.div>
+          </div>
+        </section>
+
+        <section className="pb-16">
+          <div className="container mx-auto px-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="glass-card p-12 border border-border/30 text-center"
+            >
+              <GitCompare className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+              <h2 className="font-display text-2xl font-semibold text-foreground mb-2">
+                {urlIds.length === 1 ? 'Select One More Property' : 'Select Properties to Compare'}
+              </h2>
+              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                {urlIds.length === 1 
+                  ? 'You have selected 1 property. Add one more from the properties page to start comparing.'
+                  : 'Browse our property listings and click the compare icon on any two properties to see a detailed side-by-side comparison.'}
+              </p>
+              <Button
+                onClick={() => navigate('/properties')}
+                className="btn-gold gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Browse Properties
+              </Button>
+            </motion.div>
+          </div>
+        </section>
       </Layout>
     );
   }
@@ -194,7 +331,7 @@ const Compare = () => {
               Compare Properties
             </h1>
             <p className="text-muted-foreground text-lg">
-              Select two properties to compare side-by-side
+              Side-by-side comparison to help you make the right choice
             </p>
           </motion.div>
         </div>
@@ -235,337 +372,245 @@ const Compare = () => {
                         {property.title}
                       </span>
                       <button
-                        onClick={() => remove(property.id)}
+                        onClick={() => handleRemoveProperty(property.id)}
                         className="w-6 h-6 rounded-full hover:bg-destructive/20 flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   ))}
-
-                  {/* Add Property Button */}
-                  {properties.length < 2 && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowSelector(!showSelector)}
-                      className="gap-1.5 border-dashed border-border/50 hover:border-primary/50"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Add Property
-                    </Button>
-                  )}
                 </div>
               </div>
 
-              {properties.length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clear}
-                  className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 gap-1.5"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Clear All
-                </Button>
-              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClearAll}
+                className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 gap-1.5"
+              >
+                <Trash2 className="w-4 h-4" />
+                Clear All
+              </Button>
             </div>
-
-            {/* Property Selector Dropdown */}
-            {showSelector && unselectedProperties.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mt-4 pt-4 border-t border-border/30"
-              >
-                <p className="text-sm text-muted-foreground mb-3">Select a property to add:</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[300px] overflow-y-auto">
-                  {unselectedProperties.map((property) => (
-                    <button
-                      key={property.id}
-                      onClick={() => handleAddProperty(property)}
-                      className="flex items-center gap-3 p-3 bg-secondary/20 rounded-lg border border-border/20 hover:border-primary/50 hover:bg-secondary/40 transition-all text-left"
-                    >
-                      <div className="w-14 h-14 rounded-lg overflow-hidden flex-shrink-0">
-                        <img
-                          src={property.image_url || '/placeholder.svg'}
-                          alt={property.title}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-foreground truncate">
-                          {property.title}
-                        </p>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {property.location || 'No location'}
-                        </p>
-                        <p className="text-xs text-primary font-medium mt-0.5">
-                          {formatPrice(property.price)} {t('common.currency')}
-                        </p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-
-            {showSelector && unselectedProperties.length === 0 && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="mt-4 pt-4 border-t border-border/30 text-center text-muted-foreground"
-              >
-                No more properties available to add.
-              </motion.div>
-            )}
           </motion.div>
         </div>
       </section>
 
       {/* Comparison Content */}
-      {canCompare ? (
-        <section className="pb-16">
-          <div className="container mx-auto px-6">
-            {/* Property Cards - Desktop: side by side, Mobile: stacked */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
-              {properties.map((property, index) => (
-                <motion.div
-                  key={property.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="glass-card overflow-hidden border border-border/30"
-                >
-                  {/* Image */}
-                  <div className="relative aspect-[16/10] overflow-hidden">
-                    <img
-                      src={property.image_url || '/placeholder.svg'}
-                      alt={property.title}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
-                    
-                    {/* Status Badge */}
-                    <div className="absolute top-4 left-4">
-                      <Badge className={`badge-${property.status} text-xs`}>
-                        {t(`property.status.${property.status}` as const)}
-                      </Badge>
+      <section className="pb-16">
+        <div className="container mx-auto px-6">
+          {/* Property Cards - Desktop: side by side, Mobile: stacked */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
+            {properties.map((property, index) => (
+              <motion.div
+                key={property.id}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="glass-card overflow-hidden border border-border/30"
+              >
+                {/* Image */}
+                <div className="relative aspect-[16/10] overflow-hidden">
+                  <img
+                    src={property.image_url || '/placeholder.svg'}
+                    alt={property.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
+                  
+                  {/* Status Badge */}
+                  <div className="absolute top-4 left-4">
+                    <Badge className={`badge-${property.status} text-xs`}>
+                      {t(`property.status.${property.status}` as const)}
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="p-6">
+                  <h2 className="font-display text-2xl font-semibold text-foreground mb-2">
+                    {property.title}
+                  </h2>
+                  <div className="flex items-center gap-2 text-muted-foreground mb-4">
+                    <MapPin className="w-4 h-4 text-primary" />
+                    <span>{property.location || 'Location not specified'}</span>
+                  </div>
+
+                  {/* Price */}
+                  <div className="mb-6">
+                    <p className="text-3xl font-semibold text-gold-gradient">
+                      {formatPrice(property.price)} {t('common.currency')}
+                    </p>
+                  </div>
+
+                  {/* Quick Stats */}
+                  <div className="grid grid-cols-3 gap-4 mb-6">
+                    <div className="text-center p-3 bg-secondary/30 rounded-lg">
+                      <Bed className="w-5 h-5 text-primary mx-auto mb-1" />
+                      <p className="text-lg font-semibold text-foreground">{property.beds || '—'}</p>
+                      <p className="text-xs text-muted-foreground">{t('property.beds')}</p>
+                    </div>
+                    <div className="text-center p-3 bg-secondary/30 rounded-lg">
+                      <Bath className="w-5 h-5 text-primary mx-auto mb-1" />
+                      <p className="text-lg font-semibold text-foreground">{property.baths || '—'}</p>
+                      <p className="text-xs text-muted-foreground">{t('property.baths')}</p>
+                    </div>
+                    <div className="text-center p-3 bg-secondary/30 rounded-lg">
+                      <Maximize className="w-5 h-5 text-primary mx-auto mb-1" />
+                      <p className="text-lg font-semibold text-foreground">{property.area || '—'}</p>
+                      <p className="text-xs text-muted-foreground">{t('property.sqm')}</p>
                     </div>
                   </div>
 
-                  {/* Content */}
-                  <div className="p-6">
-                    <h2 className="font-display text-2xl font-semibold text-foreground mb-2">
-                      {property.title}
-                    </h2>
-                    <div className="flex items-center gap-2 text-muted-foreground mb-4">
-                      <MapPin className="w-4 h-4 text-primary" />
-                      <span>{property.location || 'Location not specified'}</span>
-                    </div>
-
-                    {/* Price */}
-                    <div className="mb-6">
-                      <p className="text-3xl font-semibold text-gold-gradient">
-                        {formatPrice(property.price)} {t('common.currency')}
-                      </p>
-                    </div>
-
-                    {/* Quick Stats */}
-                    <div className="grid grid-cols-3 gap-4 mb-6">
-                      <div className="text-center p-3 bg-secondary/30 rounded-lg">
-                        <Bed className="w-5 h-5 text-primary mx-auto mb-1" />
-                        <p className="text-lg font-semibold text-foreground">{property.beds || '—'}</p>
-                        <p className="text-xs text-muted-foreground">{t('property.beds')}</p>
-                      </div>
-                      <div className="text-center p-3 bg-secondary/30 rounded-lg">
-                        <Bath className="w-5 h-5 text-primary mx-auto mb-1" />
-                        <p className="text-lg font-semibold text-foreground">{property.baths || '—'}</p>
-                        <p className="text-xs text-muted-foreground">{t('property.baths')}</p>
-                      </div>
-                      <div className="text-center p-3 bg-secondary/30 rounded-lg">
-                        <Maximize className="w-5 h-5 text-primary mx-auto mb-1" />
-                        <p className="text-lg font-semibold text-foreground">{property.area || '—'}</p>
-                        <p className="text-xs text-muted-foreground">{t('property.sqm')}</p>
-                      </div>
-                    </div>
-
-                    {/* CTAs */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <Button className="btn-gold gap-2 h-11">
-                        <MessageCircle className="w-4 h-4" />
-                        WhatsApp
+                  {/* CTAs */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button className="btn-gold gap-2 h-11">
+                      <MessageCircle className="w-4 h-4" />
+                      WhatsApp
+                    </Button>
+                    <Link to={`/properties/${property.id}`}>
+                      <Button
+                        variant="outline"
+                        className="w-full h-11 gap-2 border-border/50 hover:border-primary/50"
+                      >
+                        <Eye className="w-4 h-4" />
+                        View Details
                       </Button>
-                      <Link to={`/properties/${property.id}`}>
-                        <Button
-                          variant="outline"
-                          className="w-full h-11 gap-2 border-border/50 hover:border-primary/50"
-                        >
-                          <Eye className="w-4 h-4" />
-                          View Details
-                        </Button>
-                      </Link>
-                    </div>
+                    </Link>
                   </div>
-                </motion.div>
-              ))}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Specs Comparison Table */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="glass-card overflow-hidden border border-border/30"
+          >
+            <div className="p-6 border-b border-border/30">
+              <h3 className="font-display text-xl font-semibold text-foreground">
+                Detailed Comparison
+              </h3>
             </div>
 
-            {/* Specs Comparison Table */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="glass-card overflow-hidden border border-border/30"
-            >
-              <div className="p-6 border-b border-border/30">
-                <h3 className="font-display text-xl font-semibold text-foreground">
-                  Detailed Comparison
-                </h3>
-              </div>
-
-              {/* Desktop Table */}
-              <div className="hidden md:block">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border/30">
-                      <th className="text-left p-4 text-muted-foreground font-medium w-1/3">
-                        Specification
-                      </th>
-                      <th className="text-center p-4 text-foreground font-medium w-1/3">
-                        {properties[0]?.title}
-                      </th>
-                      <th className="text-center p-4 text-foreground font-medium w-1/3">
-                        {properties[1]?.title}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {specs.map((spec) => {
-                      const isDifferent = valuesAreDifferent(spec.key);
-                      const Icon = spec.icon;
-                      return (
-                        <tr
-                          key={spec.key}
-                          className={`border-b border-border/20 transition-all ${
-                            isDifferent ? 'bg-primary/5 ring-1 ring-inset ring-primary/20' : ''
-                          }`}
-                        >
-                          <td className="p-4">
-                            <div className="flex items-center gap-3">
-                              <Icon className="w-5 h-5 text-primary" />
-                              <span className="text-foreground">{spec.label}</span>
-                            </div>
-                          </td>
-                          <td className="p-4 text-center">
-                            <span className={`font-medium ${isDifferent ? 'text-primary' : 'text-foreground'}`}>
-                              {getSpecValue(properties[0], spec.key)}
-                            </span>
-                          </td>
-                          <td className="p-4 text-center">
-                            <span className={`font-medium ${isDifferent ? 'text-primary' : 'text-foreground'}`}>
-                              {getSpecValue(properties[1], spec.key)}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                    {/* Price Row */}
-                    <tr
-                      className={`border-b border-border/20 transition-all ${
-                        properties[0]?.price !== properties[1]?.price ? 'bg-primary/5 ring-1 ring-inset ring-primary/20' : ''
-                      }`}
-                    >
-                      <td className="p-4">
-                        <div className="flex items-center gap-3">
-                          <span className="w-5 h-5 flex items-center justify-center text-primary font-bold">$</span>
-                          <span className="text-foreground">Price</span>
-                        </div>
-                      </td>
-                      <td className="p-4 text-center">
-                        <span className="font-semibold text-primary">
-                          {formatPrice(properties[0]?.price)} {t('common.currency')}
-                        </span>
-                      </td>
-                      <td className="p-4 text-center">
-                        <span className="font-semibold text-primary">
-                          {formatPrice(properties[1]?.price)} {t('common.currency')}
-                        </span>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Mobile: Horizontal Scroll Table */}
-              <div className="md:hidden overflow-x-auto">
-                <table className="w-full min-w-[500px]">
-                  <thead>
-                    <tr className="border-b border-border/30">
-                      <th className="text-left p-4 text-muted-foreground font-medium">
-                        Spec
-                      </th>
-                      <th className="text-center p-4 text-foreground font-medium text-sm">
-                        {properties[0]?.title?.substring(0, 15)}...
-                      </th>
-                      <th className="text-center p-4 text-foreground font-medium text-sm">
-                        {properties[1]?.title?.substring(0, 15)}...
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {specs.map((spec) => {
-                      const isDifferent = valuesAreDifferent(spec.key);
-                      return (
-                        <tr
-                          key={spec.key}
-                          className={`border-b border-border/20 ${
-                            isDifferent ? 'bg-primary/5' : ''
-                          }`}
-                        >
-                          <td className="p-3 text-sm text-foreground">{spec.label}</td>
-                          <td className="p-3 text-center text-sm font-medium text-foreground">
+            {/* Desktop Table */}
+            <div className="hidden md:block">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border/30">
+                    <th className="text-left p-4 text-muted-foreground font-medium w-1/3">
+                      Specification
+                    </th>
+                    <th className="text-center p-4 text-foreground font-medium w-1/3">
+                      {properties[0]?.title}
+                    </th>
+                    <th className="text-center p-4 text-foreground font-medium w-1/3">
+                      {properties[1]?.title}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {specs.map((spec) => {
+                    const isDifferent = valuesAreDifferent(spec.key);
+                    const Icon = spec.icon;
+                    return (
+                      <tr
+                        key={spec.key}
+                        className={`border-b border-border/20 transition-all ${
+                          isDifferent ? 'bg-primary/5 ring-1 ring-inset ring-primary/20' : ''
+                        }`}
+                      >
+                        <td className="p-4">
+                          <div className="flex items-center gap-3">
+                            <Icon className="w-5 h-5 text-primary" />
+                            <span className="text-foreground">{spec.label}</span>
+                          </div>
+                        </td>
+                        <td className="p-4 text-center">
+                          <span className={`font-medium ${isDifferent ? 'text-primary' : 'text-foreground'}`}>
                             {getSpecValue(properties[0], spec.key)}
-                          </td>
-                          <td className="p-3 text-center text-sm font-medium text-foreground">
+                          </span>
+                        </td>
+                        <td className="p-4 text-center">
+                          <span className={`font-medium ${isDifferent ? 'text-primary' : 'text-foreground'}`}>
                             {getSpecValue(properties[1], spec.key)}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </motion.div>
-          </div>
-        </section>
-      ) : (
-        <section className="pb-16">
-          <div className="container mx-auto px-6">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="glass-card p-12 border border-border/30 text-center"
-            >
-              <GitCompare className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-              <h2 className="font-display text-2xl font-semibold text-foreground mb-2">
-                Select Properties to Compare
-              </h2>
-              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                Add two properties using the selector above to see a detailed side-by-side comparison.
-              </p>
-              <Button
-                onClick={() => setShowSelector(true)}
-                className="btn-gold gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Add Properties
-              </Button>
-            </motion.div>
-          </div>
-        </section>
-      )}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {/* Price Row */}
+                  <tr
+                    className={`border-b border-border/20 transition-all ${
+                      properties[0]?.price !== properties[1]?.price ? 'bg-primary/5 ring-1 ring-inset ring-primary/20' : ''
+                    }`}
+                  >
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <span className="w-5 h-5 flex items-center justify-center text-primary font-bold">$</span>
+                        <span className="text-foreground">Price</span>
+                      </div>
+                    </td>
+                    <td className="p-4 text-center">
+                      <span className="font-semibold text-primary">
+                        {formatPrice(properties[0]?.price)} {t('common.currency')}
+                      </span>
+                    </td>
+                    <td className="p-4 text-center">
+                      <span className="font-semibold text-primary">
+                        {formatPrice(properties[1]?.price)} {t('common.currency')}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile: Horizontal Scroll Table */}
+            <div className="md:hidden overflow-x-auto">
+              <table className="w-full min-w-[500px]">
+                <thead>
+                  <tr className="border-b border-border/30">
+                    <th className="text-left p-4 text-muted-foreground font-medium">
+                      Spec
+                    </th>
+                    <th className="text-center p-4 text-foreground font-medium text-sm">
+                      {properties[0]?.title?.substring(0, 15)}...
+                    </th>
+                    <th className="text-center p-4 text-foreground font-medium text-sm">
+                      {properties[1]?.title?.substring(0, 15)}...
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {specs.map((spec) => {
+                    const isDifferent = valuesAreDifferent(spec.key);
+                    return (
+                      <tr
+                        key={spec.key}
+                        className={`border-b border-border/20 ${
+                          isDifferent ? 'bg-primary/5' : ''
+                        }`}
+                      >
+                        <td className="p-3 text-sm text-foreground">{spec.label}</td>
+                        <td className="p-3 text-center text-sm font-medium text-foreground">
+                          {getSpecValue(properties[0], spec.key)}
+                        </td>
+                        <td className="p-3 text-center text-sm font-medium text-foreground">
+                          {getSpecValue(properties[1], spec.key)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
+        </div>
+      </section>
     </Layout>
   );
 };
