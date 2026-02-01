@@ -32,7 +32,7 @@ const dashboardTiles = [
 ];
 
 const ClientDashboard = () => {
-  const { user } = useAuth();
+  const { user } = useApiAuth();
 
   return (
     <PortalLayout
