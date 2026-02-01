@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, Globe, User, LogOut, ChevronDown } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useApiAuth } from '@/contexts/ApiAuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,8 +19,8 @@ import sourceLogo from '@/assets/source-logo.svg';
 const Navbar = () => {
   const { t } = useTranslation();
   const { language, setLanguage, isRTL } = useLanguage();
-  const { user, signOut } = useAuth();
-  const { isAdmin } = useUserRole();
+  const { user, signOut, isLoading: authLoading, isAuthenticated } = useApiAuth();
+  const { isAdmin, isLoading: roleLoading } = useUserRole();
   const location = useLocation();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -36,12 +36,17 @@ const Navbar = () => {
   const isActive = (href: string) => location.pathname === href;
 
   const handleSignOut = async () => {
-    await signOut();
-    toast.success('Signed out successfully');
-    navigate('/auth', { replace: true });
+    try {
+      await signOut();
+      toast.success('Signed out successfully');
+      navigate('/auth', { replace: true });
+    } catch {
+      toast.error('Failed to sign out');
+    }
   };
 
   const portalPath = isAdmin ? '/admin/dashboard' : '/client-portal/dashboard';
+  const isAuthBusy = authLoading || roleLoading;
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50">
@@ -96,7 +101,12 @@ const Navbar = () => {
               </DropdownMenu>
 
               {/* Auth Buttons */}
-              {user ? (
+              {isAuthBusy ? (
+                <Button variant="ghost" className="gap-2 text-muted-foreground" disabled>
+                  <User className="w-4 h-4" />
+                  <ChevronDown className="w-4 h-4" />
+                </Button>
+              ) : isAuthenticated && user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="gap-2 text-muted-foreground hover:text-foreground">
@@ -164,7 +174,13 @@ const Navbar = () => {
                   {link.label}
                 </Link>
               ))}
-              {user ? (
+              {isAuthBusy ? (
+                <div className="pt-4 border-t border-border/50 space-y-3">
+                  <Button className="w-full btn-gold" disabled>
+                    {t('nav.login')}
+                  </Button>
+                </div>
+              ) : isAuthenticated && user ? (
                 <div className="pt-4 border-t border-border/50 space-y-3">
                   <Link to={portalPath} onClick={() => setIsMobileMenuOpen(false)}>
                     <Button variant="outline" className="w-full border-border/50">
