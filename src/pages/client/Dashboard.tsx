@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Building2, FileText, RefreshCw, ArrowRight } from 'lucide-react';
 import PortalLayout from '@/components/portal/PortalLayout';
-import { useAuth } from '@/contexts/AuthContext';
+import { useApiAuth } from '@/contexts/ApiAuthContext';
 
 const dashboardTiles = [
   {
