@@ -20,7 +20,7 @@ interface Document {
 }
 
 const Documents = () => {
-  const { user } = useAuth();
+  const { user } = useApiAuth();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);

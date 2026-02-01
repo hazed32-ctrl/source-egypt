@@ -47,7 +47,7 @@ interface PropertyOption {
 }
 
 const ManageDocuments = () => {
-  const { user } = useAuth();
+  const { user } = useApiAuth();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [properties, setProperties] = useState<PropertyOption[]>([]);
   const [searchQuery, setSearchQuery] = useState('');

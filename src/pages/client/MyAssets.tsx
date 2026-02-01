@@ -21,7 +21,7 @@ interface Property {
 }
 
 const MyAssets = () => {
-  const { user } = useAuth();
+  const { user } = useApiAuth();
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
