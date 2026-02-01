@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { ApiAuthProvider } from "@/contexts/ApiAuthContext";
 import { LoadingProvider, useLoading } from "@/contexts/LoadingContext";
 import { CompareProvider } from "@/contexts/CompareContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
@@ -37,7 +37,14 @@ const ManageUsers = lazy(() => import("./pages/admin/ManageUsers"));
 const ManageProperties = lazy(() => import("./pages/admin/ManageProperties"));
 const ManageDocuments = lazy(() => import("./pages/admin/ManageDocuments"));
 const ManageResaleRequests = lazy(() => import("./pages/admin/ManageResaleRequests"));
-const Settings = lazy(() => import("./pages/admin/Settings"));
+const AdminSettings = lazy(() => import("./pages/admin/Settings"));
+const ManageInventory = lazy(() => import("./pages/admin/ManageInventory"));
+const ManageLeads = lazy(() => import("./pages/admin/ManageLeads"));
+const ManageCMS = lazy(() => import("./pages/admin/ManageCMS"));
+
+// Agent Pages (lazy loaded)
+const AgentDashboard = lazy(() => import("./pages/agent/Dashboard"));
+const AgentProperties = lazy(() => import("./pages/agent/MyProperties"));
 
 const queryClient = new QueryClient();
 
@@ -68,7 +75,7 @@ const AppContent = () => {
         <Route
           path="/client-portal/dashboard"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="client">
               <Suspense fallback={null}>
                 <ClientDashboard />
               </Suspense>
@@ -78,7 +85,7 @@ const AppContent = () => {
         <Route
           path="/client-portal/assets"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="client">
               <Suspense fallback={null}>
                 <MyAssets />
               </Suspense>
@@ -88,7 +95,7 @@ const AppContent = () => {
         <Route
           path="/client-portal/documents"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="client">
               <Suspense fallback={null}>
                 <Documents />
               </Suspense>
@@ -98,9 +105,31 @@ const AppContent = () => {
         <Route
           path="/client-portal/resale"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="client">
               <Suspense fallback={null}>
                 <ResaleRequest />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Agent Routes */}
+        <Route
+          path="/agent/dashboard"
+          element={
+            <ProtectedRoute requiredRole="agent">
+              <Suspense fallback={null}>
+                <AgentDashboard />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/agent/properties"
+          element={
+            <ProtectedRoute requiredRole="agent">
+              <Suspense fallback={null}>
+                <AgentProperties />
               </Suspense>
             </ProtectedRoute>
           }
@@ -110,7 +139,7 @@ const AppContent = () => {
         <Route
           path="/admin/dashboard"
           element={
-            <ProtectedRoute requiredRole="admin">
+            <ProtectedRoute requiredRole={['admin', 'super_admin']}>
               <Suspense fallback={null}>
                 <AdminDashboard />
               </Suspense>
@@ -120,7 +149,7 @@ const AppContent = () => {
         <Route
           path="/admin/users"
           element={
-            <ProtectedRoute requiredRole="admin">
+            <ProtectedRoute requiredRole={['admin', 'super_admin']}>
               <Suspense fallback={null}>
                 <ManageUsers />
               </Suspense>
@@ -130,7 +159,7 @@ const AppContent = () => {
         <Route
           path="/admin/properties"
           element={
-            <ProtectedRoute requiredRole="admin">
+            <ProtectedRoute requiredRole={['admin', 'super_admin']}>
               <Suspense fallback={null}>
                 <ManageProperties />
               </Suspense>
@@ -138,9 +167,19 @@ const AppContent = () => {
           }
         />
         <Route
+          path="/admin/inventory"
+          element={
+            <ProtectedRoute requiredRole={['admin', 'super_admin']}>
+              <Suspense fallback={null}>
+                <ManageInventory />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/admin/documents"
           element={
-            <ProtectedRoute requiredRole="admin">
+            <ProtectedRoute requiredRole={['admin', 'super_admin']}>
               <Suspense fallback={null}>
                 <ManageDocuments />
               </Suspense>
@@ -148,9 +187,19 @@ const AppContent = () => {
           }
         />
         <Route
+          path="/admin/leads"
+          element={
+            <ProtectedRoute requiredRole={['admin', 'super_admin', 'sales_agent']}>
+              <Suspense fallback={null}>
+                <ManageLeads />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/admin/resale"
           element={
-            <ProtectedRoute requiredRole="admin">
+            <ProtectedRoute requiredRole={['admin', 'super_admin']}>
               <Suspense fallback={null}>
                 <ManageResaleRequests />
               </Suspense>
@@ -158,11 +207,21 @@ const AppContent = () => {
           }
         />
         <Route
+          path="/admin/cms"
+          element={
+            <ProtectedRoute requiredRole={['admin', 'super_admin']}>
+              <Suspense fallback={null}>
+                <ManageCMS />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/admin/settings"
           element={
-            <ProtectedRoute requiredRole="admin">
+            <ProtectedRoute requiredRole={['admin', 'super_admin']}>
               <Suspense fallback={null}>
-                <Settings />
+                <AdminSettings />
               </Suspense>
             </ProtectedRoute>
           }
@@ -184,7 +243,7 @@ const AppContent = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <LanguageProvider>
-      <AuthProvider>
+      <ApiAuthProvider>
         <LoadingProvider>
           <CompareProvider>
             <TooltipProvider>
@@ -196,7 +255,7 @@ const App = () => (
             </TooltipProvider>
           </CompareProvider>
         </LoadingProvider>
-      </AuthProvider>
+      </ApiAuthProvider>
     </LanguageProvider>
   </QueryClientProvider>
 );
