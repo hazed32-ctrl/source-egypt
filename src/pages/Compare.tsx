@@ -163,7 +163,7 @@ const Compare = () => {
   }
 
   return (
-    <Layout hideCompareBar>
+    <Layout>
       {/* Header */}
       <section className="relative py-16 overflow-hidden">
         {/* Watermark */}
