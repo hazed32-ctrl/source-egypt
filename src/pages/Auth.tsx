@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { z } from 'zod';
 import sourceLogo from '@/assets/source-logo.svg';
+import ForgotPasswordModal from '@/components/auth/ForgotPasswordModal';
 
 const loginSchema = z.object({
   email: z.string().trim().email({ message: "Invalid email address" }),
@@ -23,6 +24,7 @@ const Auth = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const { signIn, user, isLoading: authLoading } = useApiAuth();
   const navigate = useNavigate();
 
@@ -210,12 +212,17 @@ const Auth = () => {
               </div>
               <button
                 type="button"
-                className="text-sm text-primary hover:text-primary-hover transition-colors"
-                onClick={() => toast.info('Please contact your administrator to reset your password.')}
+                className="text-sm text-primary hover:text-primary/80 transition-colors"
+                onClick={() => setShowForgotPassword(true)}
               >
                 Forgot password?
               </button>
             </div>
+
+            <ForgotPasswordModal
+              open={showForgotPassword}
+              onOpenChange={setShowForgotPassword}
+            />
 
             <Button
               type="submit"
