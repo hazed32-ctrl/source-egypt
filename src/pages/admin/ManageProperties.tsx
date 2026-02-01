@@ -372,14 +372,14 @@ const ManageProperties = () => {
               <div>
                 <Label>Assign to User</Label>
                 <Select
-                  value={formData.assigned_user_id}
-                  onValueChange={(value) => setFormData({ ...formData, assigned_user_id: value })}
+                  value={formData.assigned_user_id || 'unassigned'}
+                  onValueChange={(value) => setFormData({ ...formData, assigned_user_id: value === 'unassigned' ? '' : value })}
                 >
                   <SelectTrigger className="input-luxury mt-1">
                     <SelectValue placeholder="Select user..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Unassigned</SelectItem>
+                    <SelectItem value="unassigned">Unassigned</SelectItem>
                     {users.map((u) => (
                       <SelectItem key={u.user_id} value={u.user_id}>
                         {u.full_name || u.email}
