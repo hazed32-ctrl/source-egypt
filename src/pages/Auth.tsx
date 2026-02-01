@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { z } from 'zod';
 import sourceLogo from '@/assets/source-logo.svg';
+import ForgotPasswordModal from '@/components/auth/ForgotPasswordModal';
 
 const loginSchema = z.object({
   email: z.string().trim().email({ message: "Invalid email address" }),
