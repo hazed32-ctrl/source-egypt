@@ -115,6 +115,16 @@ const AppContent = () => {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/client-portal/profile"
+          element={
+            <ProtectedRoute requiredRole="client">
+              <Suspense fallback={null}>
+                <EditProfile />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        />
 
         {/* Agent Routes */}
         <Route
