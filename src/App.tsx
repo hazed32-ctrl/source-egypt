@@ -44,12 +44,14 @@ const queryClient = new QueryClient();
 // Inner app component that can use loading context
 const AppContent = () => {
   const { isLoading } = useLoading();
+  const location = window.location.pathname;
+  const isComparePage = location === '/compare';
 
   return (
     <>
       <LoadingScreen isLoading={isLoading} minDuration={1000} />
       <RouteLoadingHandler />
-      <CompareBar />
+      {!isComparePage && <CompareBar />}
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Index />} />
