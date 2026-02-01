@@ -1,92 +1,36 @@
 /**
- * Mortgage/Installment Calculator
- * Professional calculator with charts
+ * Mortgage / Installment Calculator
+ * Production-grade with charts and accurate formulas
  */
 
 import { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
-import {
-  Calculator,
-  TrendingUp,
-  DollarSign,
-  Calendar,
-  Percent,
-  Info,
-} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Calculator, Info } from 'lucide-react';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import {
   Tooltip,
   TooltipContent,
+  TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import {
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ResponsiveContainer,
-  Legend,
-  Tooltip as RechartsTooltip,
-} from 'recharts';
+import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 
 interface MortgageCalculatorProps {
-  propertyPrice: number;
+  price: number;
   currency?: 'EGP' | 'USD';
-  paymentPlan?: {
-    downPayment: number;
-    installmentYears: number;
-    monthlyPayment?: number;
-  };
 }
 
-const formatCurrency = (value: number, currency: string): string => {
-  if (currency === 'EGP') {
-    return new Intl.NumberFormat('en-EG', {
-      style: 'currency',
-      currency: 'EGP',
-      maximumFractionDigits: 0,
-    }).format(value);
-  }
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(value);
-};
-
-const formatNumber = (value: number): string => {
-  return new Intl.NumberFormat('en-US', {
-    maximumFractionDigits: 0,
-  }).format(value);
-};
-
-const CHART_COLORS = {
-  downPayment: 'hsl(43, 74%, 49%)', // Gold
-  installments: 'hsl(220, 70%, 50%)', // Blue
-  interest: 'hsl(0, 72%, 51%)', // Red
-};
-
-const MortgageCalculator = ({
-  propertyPrice,
-  currency = 'EGP',
-  paymentPlan,
-}: MortgageCalculatorProps) => {
-  // State
-  const [price, setPrice] = useState(propertyPrice);
-  const [downPaymentPercent, setDownPaymentPercent] = useState(
-    paymentPlan?.downPayment || 20
-  );
-  const [years, setYears] = useState(paymentPlan?.installmentYears || 10);
-  const [interestEnabled, setInterestEnabled] = useState(false);
-  const [interestRate, setInterestRate] = useState(10);
+const MortgageCalculator = ({ price, currency = 'EGP' }: MortgageCalculatorProps) => {
+  const { t } = useTranslation();
+  
+  // Calculator state
+  const [downPaymentPercent, setDownPaymentPercent] = useState(20);
+  const [years, setYears] = useState(10);
+  const [interestRate, setInterestRate] = useState(0);
+  const [includeInterest, setIncludeInterest] = useState(false);
 
   // Calculations
   const calculations = useMemo(() => {
@@ -98,106 +42,81 @@ const MortgageCalculator = ({
     let totalInterest: number;
     let totalPaid: number;
 
-    if (interestEnabled && interestRate > 0) {
-      // Amortizing loan calculation
+    if (includeInterest && interestRate > 0) {
+      // With interest - using standard amortization formula
       const monthlyRate = interestRate / 100 / 12;
-      if (monthlyRate === 0) {
-        monthlyPayment = loanAmount / months;
-        totalInterest = 0;
-      } else {
-        monthlyPayment =
-          (loanAmount * monthlyRate * Math.pow(1 + monthlyRate, months)) /
-          (Math.pow(1 + monthlyRate, months) - 1);
-        totalInterest = monthlyPayment * months - loanAmount;
-      }
+      monthlyPayment = loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, months)) / (Math.pow(1 + monthlyRate, months) - 1);
+      totalPaid = monthlyPayment * months + downPaymentAmount;
+      totalInterest = totalPaid - price;
     } else {
-      // Simple installment (no interest)
+      // Without interest - simple division
       monthlyPayment = loanAmount / months;
+      totalPaid = price;
       totalInterest = 0;
     }
 
-    totalPaid = downPaymentAmount + monthlyPayment * months;
+    // Handle edge cases
+    if (!isFinite(monthlyPayment) || isNaN(monthlyPayment)) {
+      monthlyPayment = 0;
+    }
+    if (!isFinite(totalInterest) || isNaN(totalInterest)) {
+      totalInterest = 0;
+    }
+    if (!isFinite(totalPaid) || isNaN(totalPaid)) {
+      totalPaid = price;
+    }
 
     return {
       downPaymentAmount,
       loanAmount,
+      monthlyPayment,
+      totalInterest,
+      totalPaid,
       months,
-      monthlyPayment: isNaN(monthlyPayment) ? 0 : monthlyPayment,
-      totalInterest: isNaN(totalInterest) ? 0 : totalInterest,
-      totalPaid: isNaN(totalPaid) ? 0 : totalPaid,
     };
-  }, [price, downPaymentPercent, years, interestEnabled, interestRate]);
+  }, [price, downPaymentPercent, years, interestRate, includeInterest]);
 
-  // Pie chart data
+  // Chart data
   const pieData = useMemo(() => {
     const data = [
-      {
-        name: 'Down Payment',
-        value: calculations.downPaymentAmount,
-        color: CHART_COLORS.downPayment,
-      },
-      {
-        name: 'Installments',
-        value: calculations.loanAmount,
-        color: CHART_COLORS.installments,
-      },
+      { name: 'Down Payment', value: calculations.downPaymentAmount, color: 'hsl(var(--primary))' },
+      { name: 'Installments', value: calculations.loanAmount, color: 'hsl(var(--chart-2))' },
     ];
-
+    
     if (calculations.totalInterest > 0) {
-      data.push({
-        name: 'Interest',
-        value: calculations.totalInterest,
-        color: CHART_COLORS.interest,
-      });
+      data.push({ name: 'Interest', value: calculations.totalInterest, color: 'hsl(var(--chart-5))' });
     }
-
+    
     return data;
   }, [calculations]);
 
-  // Bar chart data (yearly breakdown)
-  const barData = useMemo(() => {
-    const yearlyData = [];
-    const yearlyPayment = calculations.monthlyPayment * 12;
-    let remainingBalance = calculations.loanAmount;
-    const monthlyRate = interestEnabled ? interestRate / 100 / 12 : 0;
+  const formatPrice = (value: number) => {
+    return new Intl.NumberFormat('en-EG', {
+      style: 'decimal',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
 
-    for (let year = 1; year <= years; year++) {
-      let yearlyPrincipal = 0;
-      let yearlyInterest = 0;
-
-      for (let month = 0; month < 12; month++) {
-        if (remainingBalance <= 0) break;
-
-        const interestPayment = remainingBalance * monthlyRate;
-        const principalPayment = Math.min(
-          calculations.monthlyPayment - interestPayment,
-          remainingBalance
-        );
-
-        yearlyPrincipal += principalPayment;
-        yearlyInterest += interestPayment;
-        remainingBalance -= principalPayment;
-      }
-
-      yearlyData.push({
-        year: `Y${year}`,
-        principal: Math.round(yearlyPrincipal),
-        interest: Math.round(yearlyInterest),
-      });
+  const formatShortPrice = (value: number) => {
+    if (value >= 1000000) {
+      return `${(value / 1000000).toFixed(1)}M`;
     }
-
-    return yearlyData;
-  }, [calculations, years, interestEnabled, interestRate]);
+    if (value >= 1000) {
+      return `${(value / 1000).toFixed(0)}K`;
+    }
+    return value.toFixed(0);
+  };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="glass-card p-6 border border-border/20"
+      className="glass-card p-6"
     >
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-          <Calculator className="w-6 h-6 text-primary" />
+        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+          <Calculator className="w-5 h-5 text-primary" />
         </div>
         <div>
           <h3 className="font-display text-xl font-semibold text-foreground">
@@ -209,158 +128,150 @@ const MortgageCalculator = ({
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Inputs */}
         <div className="space-y-6">
-          {/* Price */}
+          {/* Property Price (Read-only) */}
           <div>
-            <Label className="flex items-center gap-2 mb-2">
-              <DollarSign className="w-4 h-4 text-primary" />
+            <Label className="text-sm text-muted-foreground mb-2 block">
               Property Price
             </Label>
-            <Input
-              type="number"
-              value={price}
-              onChange={(e) => setPrice(Math.max(0, Number(e.target.value)))}
-              className="input-luxury text-lg font-semibold"
-            />
+            <div className="input-luxury h-12 flex items-center bg-secondary/30 px-4 rounded-lg">
+              <span className="text-foreground font-medium">
+                {formatPrice(price)} {currency}
+              </span>
+            </div>
           </div>
 
           {/* Down Payment */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <Label className="flex items-center gap-2">
-                <Percent className="w-4 h-4 text-primary" />
+              <Label className="text-sm text-muted-foreground">
                 Down Payment
               </Label>
-              <span className="text-sm font-medium text-primary">
-                {downPaymentPercent}% ({formatCurrency(calculations.downPaymentAmount, currency)})
+              <span className="text-sm font-medium text-foreground">
+                {downPaymentPercent}% ({formatShortPrice(calculations.downPaymentAmount)} {currency})
               </span>
             </div>
             <Slider
               value={[downPaymentPercent]}
-              onValueChange={([value]) => setDownPaymentPercent(value)}
-              min={0}
-              max={100}
+              onValueChange={([val]) => setDownPaymentPercent(val)}
+              min={5}
+              max={50}
               step={5}
               className="py-4"
             />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>0%</span>
-              <span>50%</span>
-              <span>100%</span>
-            </div>
           </div>
 
           {/* Duration */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <Label className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-primary" />
-                Payment Duration
+              <Label className="text-sm text-muted-foreground">
+                Duration
               </Label>
-              <span className="text-sm font-medium text-primary">
-                {years} years ({calculations.months} months)
+              <span className="text-sm font-medium text-foreground">
+                {years} Years ({calculations.months} months)
               </span>
             </div>
             <Slider
               value={[years]}
-              onValueChange={([value]) => setYears(value)}
+              onValueChange={([val]) => setYears(val)}
               min={1}
-              max={20}
+              max={15}
               step={1}
               className="py-4"
             />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>1 year</span>
-              <span>10 years</span>
-              <span>20 years</span>
-            </div>
           </div>
 
           {/* Interest Toggle */}
-          <div className="glass-card p-4 border border-border/10">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Label htmlFor="interest-toggle">Include Interest</Label>
+          <div className="flex items-center justify-between p-4 bg-secondary/30 rounded-lg">
+            <div className="flex items-center gap-2">
+              <Label className="text-sm text-foreground">
+                Include Interest
+              </Label>
+              <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger>
                     <Info className="w-4 h-4 text-muted-foreground" />
                   </TooltipTrigger>
                   <TooltipContent>
-                    Enable this for bank financing calculations
+                    <p>Toggle to calculate with bank interest rates</p>
                   </TooltipContent>
                 </Tooltip>
-              </div>
-              <Switch
-                id="interest-toggle"
-                checked={interestEnabled}
-                onCheckedChange={setInterestEnabled}
-              />
+              </TooltipProvider>
             </div>
-
-            {interestEnabled && (
-              <div className="mt-4">
-                <div className="flex items-center justify-between mb-2">
-                  <Label>Interest Rate</Label>
-                  <span className="text-sm font-medium text-primary">
-                    {interestRate}% per year
-                  </span>
-                </div>
-                <Slider
-                  value={[interestRate]}
-                  onValueChange={([value]) => setInterestRate(value)}
-                  min={1}
-                  max={25}
-                  step={0.5}
-                  className="py-4"
-                />
-              </div>
-            )}
+            <Switch
+              checked={includeInterest}
+              onCheckedChange={setIncludeInterest}
+            />
           </div>
+
+          {/* Interest Rate */}
+          {includeInterest && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <Label className="text-sm text-muted-foreground">
+                  Annual Interest Rate
+                </Label>
+                <span className="text-sm font-medium text-foreground">
+                  {interestRate}%
+                </span>
+              </div>
+              <Slider
+                value={[interestRate]}
+                onValueChange={([val]) => setInterestRate(val)}
+                min={0}
+                max={25}
+                step={0.5}
+                className="py-4"
+              />
+            </motion.div>
+          )}
         </div>
 
         {/* Results & Charts */}
         <div className="space-y-6">
-          {/* Summary Cards */}
+          {/* Summary */}
           <div className="grid grid-cols-2 gap-4">
-            <Card className="glass-card border-primary/20">
-              <CardContent className="p-4 text-center">
-                <p className="text-xs text-muted-foreground mb-1">Monthly Payment</p>
-                <p className="text-xl font-display font-bold text-gold-gradient">
-                  {formatCurrency(calculations.monthlyPayment, currency)}
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="glass-card border-border/20">
-              <CardContent className="p-4 text-center">
-                <p className="text-xs text-muted-foreground mb-1">Total Payment</p>
-                <p className="text-xl font-display font-bold text-foreground">
-                  {formatCurrency(calculations.totalPaid, currency)}
-                </p>
-              </CardContent>
-            </Card>
+            <div className="bg-secondary/30 rounded-xl p-4 text-center">
+              <p className="text-sm text-muted-foreground mb-1">Monthly Payment</p>
+              <p className="text-2xl font-semibold text-gold-gradient">
+                {formatPrice(calculations.monthlyPayment)}
+              </p>
+              <p className="text-xs text-muted-foreground">{currency}</p>
+            </div>
+            <div className="bg-secondary/30 rounded-xl p-4 text-center">
+              <p className="text-sm text-muted-foreground mb-1">Total Paid</p>
+              <p className="text-2xl font-semibold text-foreground">
+                {formatShortPrice(calculations.totalPaid)}
+              </p>
+              <p className="text-xs text-muted-foreground">{currency}</p>
+            </div>
           </div>
 
           {calculations.totalInterest > 0 && (
-            <div className="text-center p-3 bg-destructive/10 rounded-lg border border-destructive/20">
-              <p className="text-sm text-muted-foreground">Total Interest</p>
-              <p className="text-lg font-semibold text-destructive">
-                {formatCurrency(calculations.totalInterest, currency)}
+            <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-4 text-center">
+              <p className="text-sm text-muted-foreground mb-1">Total Interest</p>
+              <p className="text-xl font-semibold text-destructive">
+                {formatPrice(calculations.totalInterest)} {currency}
               </p>
             </div>
           )}
 
           {/* Pie Chart */}
-          <div className="h-[200px]">
+          <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={pieData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={50}
-                  outerRadius={80}
+                  innerRadius={40}
+                  outerRadius={70}
                   paddingAngle={2}
                   dataKey="value"
                 >
@@ -369,80 +280,29 @@ const MortgageCalculator = ({
                   ))}
                 </Pie>
                 <RechartsTooltip
-                  content={({ active, payload }) => {
-                    if (!active || !payload?.length) return null;
-                    const data = payload[0].payload;
-                    return (
-                      <div className="glass-card p-2 text-xs">
-                        <p className="text-foreground font-medium">{data.name}</p>
-                        <p className="text-muted-foreground">
-                          {formatCurrency(data.value, currency)}
-                        </p>
-                      </div>
-                    );
+                  formatter={(value: number) => formatPrice(value)}
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
                   }}
-                />
-                <Legend
-                  formatter={(value) => (
-                    <span className="text-xs text-muted-foreground">{value}</span>
-                  )}
                 />
               </PieChart>
             </ResponsiveContainer>
           </div>
 
-          {/* Bar Chart - Yearly Breakdown */}
-          {years > 1 && (
-            <div className="h-[180px]">
-              <p className="text-xs text-muted-foreground mb-2">
-                Yearly Payment Breakdown
-              </p>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={barData} barGap={0}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis
-                    dataKey="year"
-                    stroke="hsl(var(--muted-foreground))"
-                    fontSize={10}
-                  />
-                  <YAxis
-                    stroke="hsl(var(--muted-foreground))"
-                    fontSize={10}
-                    tickFormatter={(v) => `${Math.round(v / 1000)}K`}
-                  />
-                  <RechartsTooltip
-                    content={({ active, payload, label }) => {
-                      if (!active || !payload?.length) return null;
-                      return (
-                        <div className="glass-card p-2 text-xs">
-                          <p className="text-foreground font-medium mb-1">{label}</p>
-                          {payload.map((p, i) => (
-                            <p key={i} style={{ color: p.color }}>
-                              {p.name}: {formatCurrency(p.value as number, currency)}
-                            </p>
-                          ))}
-                        </div>
-                      );
-                    }}
-                  />
-                  <Bar
-                    dataKey="principal"
-                    name="Principal"
-                    stackId="a"
-                    fill={CHART_COLORS.installments}
-                  />
-                  {interestEnabled && (
-                    <Bar
-                      dataKey="interest"
-                      name="Interest"
-                      stackId="a"
-                      fill={CHART_COLORS.interest}
-                    />
-                  )}
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
+          {/* Legend */}
+          <div className="flex flex-wrap justify-center gap-4 text-sm">
+            {pieData.map((item) => (
+              <div key={item.name} className="flex items-center gap-2">
+                <div
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: item.color }}
+                />
+                <span className="text-muted-foreground">{item.name}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </motion.div>
