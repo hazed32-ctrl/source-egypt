@@ -1,26 +1,31 @@
 /**
  * API Auth Context
- * JWT-based authentication with external backend support
+ * Supabase-based authentication with role support
  */
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import {
-  User,
-  UserRole,
-  JWTPayload,
-  IS_MOCK_MODE,
-  tokenManager,
-  mockAuth,
-  decodeMockToken,
-} from '@/lib/api';
-import { post, get } from '@/lib/api/client';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { User as SupabaseUser, Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
+import { UserRole } from '@/lib/api/types';
+
+// Extended user type with role info
+interface User {
+  id: string;
+  email: string;
+  fullName?: string;
+  avatarUrl?: string;
+  phone?: string;
+  role: UserRole;
+}
 
 interface ApiAuthContextType {
   user: User | null;
+  session: Session | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   role: UserRole | null;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   updateProfile: (data: Partial<User>) => Promise<void>;
   hasRole: (requiredRole: UserRole | UserRole[]) => boolean;
@@ -33,112 +38,171 @@ const ApiAuthContext = createContext<ApiAuthContextType | undefined>(undefined);
 
 export const ApiAuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Decode JWT and extract claims
-  const decodeToken = useCallback((token: string): JWTPayload | null => {
-    if (IS_MOCK_MODE) {
-      return decodeMockToken(token);
-    }
-    
+  // Fetch user role from user_roles table
+  const fetchUserRole = async (userId: string): Promise<UserRole> => {
     try {
-      // Decode JWT (assuming standard JWT format)
-      const parts = token.split('.');
-      if (parts.length !== 3) return null;
-      const payload = JSON.parse(atob(parts[1]));
-      return payload as JWTPayload;
-    } catch {
-      return null;
-    }
-  }, []);
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .single();
 
-  // Check token expiration
-  const isTokenExpired = useCallback((token: string): boolean => {
-    const payload = decodeToken(token);
-    if (!payload) return true;
-    return payload.exp * 1000 < Date.now();
-  }, [decodeToken]);
-
-  // Fetch current user from API or token
-  const fetchCurrentUser = useCallback(async (): Promise<User | null> => {
-    const token = tokenManager.getAccessToken();
-    if (!token || isTokenExpired(token)) {
-      tokenManager.clearTokens();
-      return null;
-    }
-
-    try {
-      if (IS_MOCK_MODE) {
-        const result = await mockAuth.getCurrentUser();
-        return result;
+      if (error || !data) {
+        console.warn('No role found for user, defaulting to client');
+        return 'client';
       }
-      
-      const user = await get<User>('/auth/me');
-      return user;
+
+      return data.role as UserRole;
     } catch (error) {
-      console.error('Failed to fetch current user:', error);
-      tokenManager.clearTokens();
-      return null;
+      console.error('Error fetching user role:', error);
+      return 'client';
     }
-  }, [isTokenExpired]);
+  };
+
+  // Fetch user profile from profiles table
+  const fetchUserProfile = async (userId: string): Promise<Partial<User>> => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name, avatar_url, phone, email')
+        .eq('user_id', userId)
+        .single();
+
+      if (error || !data) {
+        return {};
+      }
+
+      return {
+        fullName: data.full_name || undefined,
+        avatarUrl: data.avatar_url || undefined,
+        phone: data.phone || undefined,
+        email: data.email || undefined,
+      };
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      return {};
+    }
+  };
+
+  // Build user object from Supabase user
+  const buildUser = async (supabaseUser: SupabaseUser): Promise<User> => {
+    const [role, profile] = await Promise.all([
+      fetchUserRole(supabaseUser.id),
+      fetchUserProfile(supabaseUser.id),
+    ]);
+
+    return {
+      id: supabaseUser.id,
+      email: profile.email || supabaseUser.email || '',
+      fullName: profile.fullName,
+      avatarUrl: profile.avatarUrl,
+      phone: profile.phone,
+      role,
+    };
+  };
 
   // Initialize auth state
   useEffect(() => {
-    const initAuth = async () => {
-      setIsLoading(true);
-      const currentUser = await fetchCurrentUser();
-      setUser(currentUser);
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, newSession) => {
+        setSession(newSession);
+        
+        if (newSession?.user) {
+          // Defer data fetch to avoid Supabase deadlock
+          setTimeout(async () => {
+            const builtUser = await buildUser(newSession.user);
+            setUser(builtUser);
+            setIsLoading(false);
+          }, 0);
+        } else {
+          setUser(null);
+          setIsLoading(false);
+        }
+      }
+    );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(async ({ data: { session: existingSession } }) => {
+      setSession(existingSession);
+      
+      if (existingSession?.user) {
+        const builtUser = await buildUser(existingSession.user);
+        setUser(builtUser);
+      }
       setIsLoading(false);
-    };
+    });
 
-    initAuth();
-  }, [fetchCurrentUser]);
+    return () => subscription.unsubscribe();
+  }, []);
 
-  // Sign in
+  // Sign in with email and password
   const signIn = async (email: string, password: string): Promise<{ error: Error | null }> => {
     try {
-      if (IS_MOCK_MODE) {
-        const response = await mockAuth.login(email, password);
-        tokenManager.setTokens(response.tokens);
-        setUser(response.user);
-        return { error: null };
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        return { error: new Error(error.message) };
       }
 
-      const response = await post<{ user: User; tokens: { accessToken: string; refreshToken: string; expiresIn: number } }>(
-        '/auth/login',
-        { email, password }
-      );
-      tokenManager.setTokens(response.tokens);
-      setUser(response.user);
       return { error: null };
-    } catch (err: unknown) {
-      const error = err as { error?: { message?: string } };
-      return { error: new Error(error?.error?.message || 'Login failed') };
+    } catch (err) {
+      return { error: err as Error };
+    }
+  };
+
+  // Sign up with email and password
+  const signUp = async (email: string, password: string): Promise<{ error: Error | null }> => {
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+        },
+      });
+
+      if (error) {
+        return { error: new Error(error.message) };
+      }
+
+      return { error: null };
+    } catch (err) {
+      return { error: err as Error };
     }
   };
 
   // Sign out
   const signOut = async (): Promise<void> => {
-    try {
-      if (IS_MOCK_MODE) {
-        await mockAuth.logout();
-      } else {
-        await post('/auth/logout');
-      }
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      tokenManager.clearTokens();
-      setUser(null);
-    }
+    await supabase.auth.signOut();
+    setUser(null);
+    setSession(null);
   };
 
   // Update profile
   const updateProfile = async (data: Partial<User>): Promise<void> => {
     if (!user) throw new Error('Not authenticated');
     
-    // In a real app, this would call the API
-    // For now, just update local state
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        full_name: data.fullName,
+        avatar_url: data.avatarUrl,
+        phone: data.phone,
+      })
+      .eq('user_id', user.id);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
     setUser({ ...user, ...data });
   };
 
@@ -158,15 +222,17 @@ export const ApiAuthProvider = ({ children }: { children: ReactNode }) => {
 
   const value: ApiAuthContextType = {
     user,
+    session,
     isLoading,
     isAuthenticated: !!user,
     role: user?.role || null,
     signIn,
+    signUp,
     signOut,
     updateProfile,
     hasRole,
     isAdmin: user?.role === 'admin' || user?.role === 'super_admin',
-    isAgent: user?.role === 'agent',
+    isAgent: user?.role === 'agent' || user?.role === 'sales_agent',
     isClient: user?.role === 'client',
   };
 
