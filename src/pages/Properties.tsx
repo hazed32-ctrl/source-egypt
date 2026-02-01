@@ -7,10 +7,9 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Grid, List, Map, Loader2, SlidersHorizontal, X, RefreshCw } from 'lucide-react';
+import { Grid, List, Map, Loader2, SlidersHorizontal, X, RefreshCw, Search } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import PropertyCard from '@/components/property/PropertyCard';
-import PropertyFiltersDrawer from '@/components/property/PropertyFiltersDrawer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -22,13 +21,35 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import { Slider } from '@/components/ui/slider';
+import { Label } from '@/components/ui/label';
+import { Check } from 'lucide-react';
 import { mockPropertiesApi } from '@/lib/api';
-import { PropertyListItem, PropertyFilters } from '@/lib/api/types';
-import { useFilters } from '@/hooks/useFilters';
-import { Search } from 'lucide-react';
+import { PropertyListItem, PropertyFilters, FinishingType } from '@/lib/api/types';
 import CompareBar from '@/components/compare/CompareBar';
 
 const ITEMS_PER_PAGE = 12;
+
+const CITIES = ['Cairo', 'New Cairo', 'Giza', 'Alexandria', 'North Coast', 'Ain Sokhna', 'Sheikh Zayed', '6th of October'];
+const FINISHING_OPTIONS: { value: FinishingType; label: string }[] = [
+  { value: 'core_shell', label: 'Core & Shell' },
+  { value: 'semi_finished', label: 'Semi Finished' },
+  { value: 'fully_finished', label: 'Fully Finished' },
+  { value: 'furnished', label: 'Furnished' },
+];
+const PROPERTY_TAGS = ['Hot Deal', 'New Launch', 'Ready to Move', 'Installments', 'Prime Location', 'Sea View', 'Garden View', 'Pool View'];
 
 const Properties = () => {
   const { t } = useTranslation();
@@ -71,6 +92,10 @@ const Properties = () => {
 
   const [filters, setFilters] = useState<PropertyFilters>(getFiltersFromURL);
   const [searchInput, setSearchInput] = useState(filters.search || '');
+  
+  // Local filter state for sliders
+  const [localPriceRange, setLocalPriceRange] = useState<[number, number]>([filters.minPrice || 0, filters.maxPrice || 20000000]);
+  const [localAreaRange, setLocalAreaRange] = useState<[number, number]>([filters.minArea || 0, filters.maxArea || 500]);
 
   // Sync filters to URL
   const syncFiltersToURL = useCallback((newFilters: PropertyFilters) => {
@@ -105,7 +130,8 @@ const Properties = () => {
     }
 
     try {
-      const response = await mockPropertiesApi.getProperties({
+      // Use the correct method name from mock handlers
+      const response = await mockPropertiesApi.list({
         ...currentFilters,
         page: pageNum,
         limit: ITEMS_PER_PAGE,
@@ -140,6 +166,8 @@ const Properties = () => {
     const urlFilters = getFiltersFromURL();
     setFilters(urlFilters);
     setSearchInput(urlFilters.search || '');
+    setLocalPriceRange([urlFilters.minPrice || 0, urlFilters.maxPrice || 20000000]);
+    setLocalAreaRange([urlFilters.minArea || 0, urlFilters.maxArea || 500]);
     setPage(1);
     fetchProperties(1, urlFilters, false);
   }, [searchParams, fetchProperties, getFiltersFromURL]);
@@ -157,7 +185,7 @@ const Properties = () => {
       },
       {
         root: null,
-        rootMargin: '200px', // Pre-fetch before reaching bottom
+        rootMargin: '200px',
         threshold: 0.1,
       }
     );
@@ -188,6 +216,8 @@ const Properties = () => {
   const clearFilters = useCallback(() => {
     setFilters({});
     setSearchInput('');
+    setLocalPriceRange([0, 20000000]);
+    setLocalAreaRange([0, 500]);
     setSearchParams({}, { replace: true });
   }, [setSearchParams]);
 
@@ -214,6 +244,20 @@ const Properties = () => {
     if (status === 'reserved' || status === 'pending') return 'reserved';
     if (status === 'sold' || status === 'archived') return 'sold';
     return 'available';
+  };
+
+  const formatPrice = (value: number) => {
+    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+    if (value >= 1000) return `${(value / 1000).toFixed(0)}K`;
+    return value.toString();
+  };
+
+  const handleTagToggle = (tag: string) => {
+    const currentTags = filters.tags || [];
+    const newTags = currentTags.includes(tag)
+      ? currentTags.filter(t => t !== tag)
+      : [...currentTags, tag];
+    handleFilterChange({ tags: newTags.length > 0 ? newTags : undefined });
   };
 
   return (
@@ -479,7 +523,6 @@ const Properties = () => {
                         image={property.imageUrl || '/placeholder.svg'}
                         status={mapStatus(property.status)}
                         salePrice={property.salePrice}
-                        tags={property.tags}
                       />
                     </motion.div>
                   ))}
@@ -511,13 +554,235 @@ const Properties = () => {
       </section>
 
       {/* Filters Drawer */}
-      <PropertyFiltersDrawer
-        isOpen={isFiltersOpen}
-        onClose={() => setIsFiltersOpen(false)}
-        filters={filters}
-        onFilterChange={handleFilterChange}
-        onClear={clearFilters}
-      />
+      <Sheet open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
+        <SheetContent 
+          side="right" 
+          className="w-full sm:max-w-md glass-card border-border/30 p-0 flex flex-col"
+        >
+          <SheetHeader className="p-6 border-b border-border/30">
+            <div className="flex items-center justify-between">
+              <SheetTitle className="font-display text-xl text-foreground">
+                Filters
+              </SheetTitle>
+              {activeFilterCount > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearFilters}
+                  className="text-muted-foreground hover:text-destructive"
+                >
+                  Clear all
+                </Button>
+              )}
+            </div>
+          </SheetHeader>
+
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            <Accordion type="multiple" defaultValue={['location', 'price', 'rooms']} className="space-y-4">
+              {/* Location */}
+              <AccordionItem value="location" className="border-b border-border/30">
+                <AccordionTrigger className="text-foreground font-medium hover:no-underline py-4">
+                  Location
+                </AccordionTrigger>
+                <AccordionContent className="pb-4">
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-sm text-muted-foreground mb-2 block">City</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {CITIES.map((city) => (
+                          <button
+                            key={city}
+                            onClick={() => handleFilterChange({ city: filters.city === city ? undefined : city })}
+                            className={`px-3 py-1.5 rounded-lg text-sm transition-all ${
+                              filters.city === city
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-secondary/50 text-foreground hover:bg-secondary'
+                            }`}
+                          >
+                            {city}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Price Range */}
+              <AccordionItem value="price" className="border-b border-border/30">
+                <AccordionTrigger className="text-foreground font-medium hover:no-underline py-4">
+                  Price Range
+                </AccordionTrigger>
+                <AccordionContent className="pb-4">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        {formatPrice(localPriceRange[0])} EGP
+                      </span>
+                      <span className="text-muted-foreground">
+                        {formatPrice(localPriceRange[1])} EGP
+                      </span>
+                    </div>
+                    <Slider
+                      value={localPriceRange}
+                      onValueChange={(vals) => setLocalPriceRange([vals[0], vals[1]])}
+                      onValueCommit={() => handleFilterChange({
+                        minPrice: localPriceRange[0] > 0 ? localPriceRange[0] : undefined,
+                        maxPrice: localPriceRange[1] < 20000000 ? localPriceRange[1] : undefined,
+                      })}
+                      min={0}
+                      max={20000000}
+                      step={100000}
+                      className="py-4"
+                    />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Bedrooms & Bathrooms */}
+              <AccordionItem value="rooms" className="border-b border-border/30">
+                <AccordionTrigger className="text-foreground font-medium hover:no-underline py-4">
+                  Rooms
+                </AccordionTrigger>
+                <AccordionContent className="pb-4">
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-sm text-muted-foreground mb-2 block">Bedrooms</Label>
+                      <div className="flex gap-2">
+                        {['Any', 1, 2, 3, 4, '5+'].map((bed) => {
+                          const value = bed === 'Any' ? undefined : bed === '5+' ? 5 : Number(bed);
+                          const isSelected = filters.bedrooms === value;
+                          return (
+                            <button
+                              key={String(bed)}
+                              onClick={() => handleFilterChange({ bedrooms: value })}
+                              className={`w-12 h-10 rounded-lg text-sm transition-all ${
+                                isSelected
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'bg-secondary/50 text-foreground hover:bg-secondary'
+                              }`}
+                            >
+                              {bed}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-sm text-muted-foreground mb-2 block">Bathrooms</Label>
+                      <div className="flex gap-2">
+                        {['Any', 1, 2, 3, '4+'].map((bath) => {
+                          const value = bath === 'Any' ? undefined : bath === '4+' ? 4 : Number(bath);
+                          const isSelected = filters.bathrooms === value;
+                          return (
+                            <button
+                              key={String(bath)}
+                              onClick={() => handleFilterChange({ bathrooms: value })}
+                              className={`w-12 h-10 rounded-lg text-sm transition-all ${
+                                isSelected
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'bg-secondary/50 text-foreground hover:bg-secondary'
+                              }`}
+                            >
+                              {bath}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Area Range */}
+              <AccordionItem value="area" className="border-b border-border/30">
+                <AccordionTrigger className="text-foreground font-medium hover:no-underline py-4">
+                  Area (sqm)
+                </AccordionTrigger>
+                <AccordionContent className="pb-4">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">{localAreaRange[0]} sqm</span>
+                      <span className="text-muted-foreground">{localAreaRange[1]} sqm</span>
+                    </div>
+                    <Slider
+                      value={localAreaRange}
+                      onValueChange={(vals) => setLocalAreaRange([vals[0], vals[1]])}
+                      onValueCommit={() => handleFilterChange({
+                        minArea: localAreaRange[0] > 0 ? localAreaRange[0] : undefined,
+                        maxArea: localAreaRange[1] < 500 ? localAreaRange[1] : undefined,
+                      })}
+                      min={0}
+                      max={500}
+                      step={10}
+                      className="py-4"
+                    />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Finishing */}
+              <AccordionItem value="finishing" className="border-b border-border/30">
+                <AccordionTrigger className="text-foreground font-medium hover:no-underline py-4">
+                  Finishing
+                </AccordionTrigger>
+                <AccordionContent className="pb-4">
+                  <div className="grid grid-cols-2 gap-2">
+                    {FINISHING_OPTIONS.map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => handleFilterChange({ finishing: filters.finishing === option.value ? undefined : option.value })}
+                        className={`px-3 py-2 rounded-lg text-sm transition-all text-left ${
+                          filters.finishing === option.value
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-secondary/50 text-foreground hover:bg-secondary'
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Tags */}
+              <AccordionItem value="tags" className="border-b border-border/30">
+                <AccordionTrigger className="text-foreground font-medium hover:no-underline py-4">
+                  Property Tags
+                </AccordionTrigger>
+                <AccordionContent className="pb-4">
+                  <div className="flex flex-wrap gap-2">
+                    {PROPERTY_TAGS.map((tag) => {
+                      const isSelected = filters.tags?.includes(tag);
+                      return (
+                        <button
+                          key={tag}
+                          onClick={() => handleTagToggle(tag)}
+                          className={`px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-1.5 ${
+                            isSelected
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-secondary/50 text-foreground hover:bg-secondary'
+                          }`}
+                        >
+                          {isSelected && <Check className="w-3 h-3" />}
+                          {tag}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
+
+          {/* Footer */}
+          <div className="p-6 border-t border-border/30 bg-background/50">
+            <Button onClick={() => setIsFiltersOpen(false)} className="w-full btn-gold h-12">
+              Show Results
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Compare Bar */}
       <CompareBar />
