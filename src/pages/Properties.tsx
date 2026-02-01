@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
-import { Grid, List, SlidersHorizontal } from 'lucide-react';
+import { Grid, List, Loader2 } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import PropertyCard from '@/components/property/PropertyCard';
 import SearchFilters from '@/components/property/SearchFilters';
@@ -13,114 +13,75 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { supabase } from '@/integrations/supabase/client';
 
-// Sample properties
-const properties = [
-  {
-    id: '1',
-    title: 'Palm Hills Residence',
-    location: 'New Cairo, Egypt',
-    price: 5500000,
-    salePrice: 4950000,
-    beds: 4,
-    baths: 3,
-    area: 280,
-    image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
-    status: 'available' as const,
-    tag: 'hot' as const,
-    constructionProgress: 85,
-  },
-  {
-    id: '2',
-    title: 'Marina Bay Penthouse',
-    location: 'North Coast, Egypt',
-    price: 12000000,
-    beds: 5,
-    baths: 4,
-    area: 450,
-    image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=80',
-    status: 'available' as const,
-    tag: 'new' as const,
-  },
-  {
-    id: '3',
-    title: 'Garden View Villa',
-    location: '6th October City, Egypt',
-    price: 8500000,
-    beds: 5,
-    baths: 4,
-    area: 380,
-    image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80',
-    status: 'reserved' as const,
-    constructionProgress: 100,
-  },
-  {
-    id: '4',
-    title: 'Skyline Apartment',
-    location: 'Zamalek, Cairo',
-    price: 3200000,
-    beds: 3,
-    baths: 2,
-    area: 180,
-    image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80',
-    status: 'available' as const,
-    tag: 'bestValue' as const,
-  },
-  {
-    id: '5',
-    title: 'Nile View Duplex',
-    location: 'Maadi, Cairo',
-    price: 7800000,
-    beds: 4,
-    baths: 3,
-    area: 320,
-    image: 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=800&q=80',
-    status: 'available' as const,
-  },
-  {
-    id: '6',
-    title: 'Beachfront Villa',
-    location: 'El Gouna, Red Sea',
-    price: 15000000,
-    beds: 6,
-    baths: 5,
-    area: 550,
-    image: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&q=80',
-    status: 'available' as const,
-    tag: 'hot' as const,
-    constructionProgress: 95,
-  },
-  {
-    id: '7',
-    title: 'Modern Studio',
-    location: 'Sheikh Zayed, Giza',
-    price: 1800000,
-    beds: 1,
-    baths: 1,
-    area: 85,
-    image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80',
-    status: 'sold' as const,
-  },
-  {
-    id: '8',
-    title: 'Luxury Townhouse',
-    location: 'New Administrative Capital',
-    price: 6500000,
-    beds: 4,
-    baths: 3,
-    area: 290,
-    image: 'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&q=80',
-    status: 'available' as const,
-    tag: 'new' as const,
-    constructionProgress: 70,
-  },
-];
+interface Property {
+  id: string;
+  title: string;
+  location: string | null;
+  price: number | null;
+  beds: number | null;
+  baths: number | null;
+  area: number | null;
+  image_url: string | null;
+  status: string;
+  progress_percent: number | null;
+}
 
 const Properties = () => {
   const { t } = useTranslation();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState('newest');
-  const [showFilters, setShowFilters] = useState(false);
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProperties = async () => {
+      setLoading(true);
+      try {
+        let query = supabase
+          .from('properties')
+          .select('id, title, location, price, beds, baths, area, image_url, status, progress_percent');
+
+        // Apply sorting
+        switch (sortBy) {
+          case 'price-low':
+            query = query.order('price', { ascending: true, nullsFirst: false });
+            break;
+          case 'price-high':
+            query = query.order('price', { ascending: false, nullsFirst: false });
+            break;
+          case 'area-large':
+            query = query.order('area', { ascending: false, nullsFirst: false });
+            break;
+          default:
+            query = query.order('created_at', { ascending: false });
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+          console.error('Error fetching properties:', error);
+          return;
+        }
+
+        setProperties(data || []);
+      } catch (err) {
+        console.error('Failed to fetch properties:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProperties();
+  }, [sortBy]);
+
+  // Map database status to UI status
+  const mapStatus = (status: string): 'available' | 'reserved' | 'sold' => {
+    if (status === 'delivered') return 'available';
+    if (status === 'under_construction') return 'available';
+    return 'available';
+  };
 
   return (
     <Layout>
@@ -198,32 +159,56 @@ const Properties = () => {
             </div>
           </div>
 
-          {/* Properties Grid */}
-          <div
-            className={
-              viewMode === 'grid'
-                ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
-                : 'space-y-6'
-            }
-          >
-            {properties.map((property, index) => (
-              <motion.div
-                key={property.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
+          {/* Loading State */}
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : properties.length === 0 ? (
+            <div className="text-center py-20">
+              <p className="text-muted-foreground text-lg">No properties found.</p>
+            </div>
+          ) : (
+            <>
+              {/* Properties Grid */}
+              <div
+                className={
+                  viewMode === 'grid'
+                    ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
+                    : 'space-y-6'
+                }
               >
-                <PropertyCard {...property} />
-              </motion.div>
-            ))}
-          </div>
+                {properties.map((property, index) => (
+                  <motion.div
+                    key={property.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <PropertyCard
+                      id={property.id}
+                      title={property.title}
+                      location={property.location || 'Location not specified'}
+                      price={property.price || 0}
+                      beds={property.beds || 0}
+                      baths={property.baths || 0}
+                      area={property.area || 0}
+                      image={property.image_url || '/placeholder.svg'}
+                      status={mapStatus(property.status)}
+                      constructionProgress={property.progress_percent || undefined}
+                    />
+                  </motion.div>
+                ))}
+              </div>
 
-          {/* Load More */}
-          <div className="text-center mt-12">
-            <Button variant="outline" size="lg" className="border-border/50 hover:border-primary/50">
-              Load More Properties
-            </Button>
-          </div>
+              {/* Load More */}
+              <div className="text-center mt-12">
+                <Button variant="outline" size="lg" className="border-border/50 hover:border-primary/50">
+                  Load More Properties
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </section>
     </Layout>
