@@ -170,6 +170,16 @@ const AppContent = () => {
           }
         />
         <Route
+          path="/admin/users/:id/edit"
+          element={
+            <ProtectedRoute requiredRole={['admin', 'super_admin']}>
+              <Suspense fallback={null}>
+                <EditUser />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/admin/properties"
           element={
             <ProtectedRoute requiredRole={['admin', 'super_admin']}>
