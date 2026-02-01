@@ -9,10 +9,14 @@ import {
   LogOut,
   Settings,
   Users,
-  ChevronRight
+  ChevronRight,
+  Package,
+  MessageSquare,
+  Layers,
+  UserCircle,
 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useUserRole } from '@/hooks/useUserRole';
+import { useApiAuth } from '@/contexts/ApiAuthContext';
+import { UserRole } from '@/lib/api/types';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import sourceLogo from '@/assets/source-logo.svg';
@@ -21,6 +25,7 @@ interface PortalLayoutProps {
   children: ReactNode;
   title?: string;
   subtitle?: string;
+  role?: 'admin' | 'client' | 'agent';
 }
 
 const clientNavItems = [
@@ -34,24 +39,49 @@ const adminNavItems = [
   { path: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/admin/users', label: 'Manage Users', icon: Users },
   { path: '/admin/properties', label: 'Properties', icon: Building2 },
+  { path: '/admin/inventory', label: 'Inventory', icon: Package },
+  { path: '/admin/leads', label: 'Leads', icon: MessageSquare },
   { path: '/admin/documents', label: 'Documents', icon: FileText },
   { path: '/admin/resale', label: 'Resale Requests', icon: RefreshCw },
+  { path: '/admin/cms', label: 'CMS', icon: Layers },
   { path: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 
-const PortalLayout = ({ children, title, subtitle }: PortalLayoutProps) => {
+const agentNavItems = [
+  { path: '/agent/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { path: '/agent/properties', label: 'My Listings', icon: Building2 },
+  { path: '/client-portal/assets', label: 'Profile', icon: UserCircle },
+];
+
+const roleLabels: Record<UserRole, string> = {
+  super_admin: 'Super Admin',
+  admin: 'Administrator',
+  agent: 'Agent',
+  sales_agent: 'Sales Agent',
+  client: 'Client',
+};
+
+const PortalLayout = ({ children, title, subtitle, role }: PortalLayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut } = useAuth();
-  const { isAdmin } = useUserRole();
+  const { signOut, user, isAdmin, isAgent, isClient } = useApiAuth();
 
-  const navItems = isAdmin ? adminNavItems : clientNavItems;
+  // Determine nav items based on role prop or user's actual role
+  const getNavItems = () => {
+    if (role === 'admin' || (!role && isAdmin)) return adminNavItems;
+    if (role === 'agent' || (!role && isAgent)) return agentNavItems;
+    return clientNavItems;
+  };
+
+  const navItems = getNavItems();
 
   const handleSignOut = async () => {
     await signOut();
     toast.success('Signed out successfully');
     navigate('/auth', { replace: true });
   };
+
+  const displayRole = user?.role ? roleLabels[user.role] : 'User';
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
@@ -94,10 +124,21 @@ const PortalLayout = ({ children, title, subtitle }: PortalLayoutProps) => {
               </Link>
 
               <div className="flex items-center gap-6">
-                {/* Role Badge */}
-                <span className="px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-                  {isAdmin ? 'Administrator' : 'Client'}
-                </span>
+                {/* User Info */}
+                {user && (
+                  <div className="flex items-center gap-3">
+                    <div className="text-right hidden sm:block">
+                      <p className="text-sm font-medium text-foreground">
+                        {user.fullName || user.email?.split('@')[0] || 'User'}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{user.email}</p>
+                    </div>
+                    {/* Role Badge */}
+                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                      {displayRole}
+                    </span>
+                  </div>
+                )}
 
                 <Button
                   variant="ghost"
@@ -117,7 +158,7 @@ const PortalLayout = ({ children, title, subtitle }: PortalLayoutProps) => {
       <div className="pt-20 flex">
         {/* Sidebar Navigation */}
         <aside className="fixed left-0 top-20 bottom-0 w-64 p-4 z-40">
-          <nav className="glass-card h-full p-4 border border-border/20">
+          <nav className="glass-card h-full p-4 border border-border/20 overflow-y-auto">
             <ul className="space-y-2">
               {navItems.map((item) => {
                 const isActive = location.pathname === item.path;
