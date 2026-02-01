@@ -12,13 +12,19 @@ interface PropertyCardProps {
   location: string;
   price: number;
   salePrice?: number;
-  beds: number;
-  baths: number;
+  originalPrice?: number; // Alias for backwards compatibility
+  bedrooms?: number;
+  beds?: number;
+  bathrooms?: number;
+  baths?: number;
   area: number;
-  image: string;
-  status: 'available' | 'reserved' | 'sold';
+  imageUrl?: string;
+  image?: string;
+  status: 'available' | 'reserved' | 'sold' | 'under_construction' | 'delivered';
   tag?: 'hot' | 'new' | 'bestValue';
   constructionProgress?: number;
+  currency?: string;
+  featured?: boolean;
 }
 
 const PropertyCard = ({
