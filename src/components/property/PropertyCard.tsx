@@ -163,11 +163,11 @@ const PropertyCard = ({
           <div className="flex items-center gap-6 mb-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-1.5">
               <Bed className="w-4 h-4 text-primary" />
-              <span>{beds} {t('property.beds')}</span>
+              <span>{displayBeds} {t('property.beds')}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Bath className="w-4 h-4 text-primary" />
-              <span>{baths} {t('property.baths')}</span>
+              <span>{displayBaths} {t('property.baths')}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Maximize className="w-4 h-4 text-primary" />
