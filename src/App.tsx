@@ -41,11 +41,11 @@ const Settings = lazy(() => import("./pages/admin/Settings"));
 
 const queryClient = new QueryClient();
 
-// Inner app component that can use loading context
+// Inner app component that can use loading context and location
 const AppContent = () => {
   const { isLoading } = useLoading();
-  const location = window.location.pathname;
-  const isComparePage = location === '/compare';
+  const location = useLocation();
+  const isComparePage = location.pathname === '/compare';
 
   return (
     <>
