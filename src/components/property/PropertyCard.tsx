@@ -178,18 +178,18 @@ const PropertyCard = ({
           {/* Price */}
           <div className="flex items-end justify-between">
             <div>
-              {salePrice ? (
+              {displayOriginalPrice ? (
                 <>
                   <p className="text-muted-foreground line-through text-sm">
-                    {formatPrice(price)} {t('common.currency')}
+                    {formatPrice(displayOriginalPrice)} {currency}
                   </p>
                   <p className="text-gold font-semibold text-xl">
-                    {formatPrice(salePrice)} {t('common.currency')}
+                    {formatPrice(price)} {currency}
                   </p>
                 </>
               ) : (
                 <p className="text-gold font-semibold text-xl">
-                  {formatPrice(price)} {t('common.currency')}
+                  {formatPrice(price)} {currency}
                 </p>
               )}
             </div>
