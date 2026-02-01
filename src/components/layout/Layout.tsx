@@ -1,13 +1,15 @@
 import { ReactNode } from 'react';
 import Navbar from './Navbar';
 import Footer from './Footer';
+import CompareBar from '@/components/compare/CompareBar';
 
 interface LayoutProps {
   children: ReactNode;
   showFooter?: boolean;
+  hideCompareBar?: boolean;
 }
 
-const Layout = ({ children, showFooter = true }: LayoutProps) => {
+const Layout = ({ children, showFooter = true, hideCompareBar = false }: LayoutProps) => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -15,6 +17,7 @@ const Layout = ({ children, showFooter = true }: LayoutProps) => {
         {children}
       </main>
       {showFooter && <Footer />}
+      {!hideCompareBar && <CompareBar />}
     </div>
   );
 };

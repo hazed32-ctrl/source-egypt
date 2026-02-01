@@ -37,6 +37,10 @@ interface Property {
   status: string;
   progress_percent: number | null;
   description: string | null;
+  assigned_user_id?: string | null;
+  created_at?: string;
+  created_by?: string | null;
+  updated_at?: string;
 }
 
 // Spec definitions for comparison table
