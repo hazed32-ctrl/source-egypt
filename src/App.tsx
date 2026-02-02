@@ -12,6 +12,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import LoadingScreen from "@/components/loading/LoadingScreen";
 import RouteLoadingHandler from "@/components/loading/RouteLoadingHandler";
 import CompareBar from "@/components/compare/CompareBar";
+import AnalyticsProvider from "@/components/analytics/AnalyticsProvider";
 import "@/lib/i18n";
 
 // Public Pages
