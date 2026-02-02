@@ -20,17 +20,21 @@ async function trackToDatabase(
 ): Promise<void> {
   const utmParams = getPersistedUTMParams();
   
-  const { error } = await supabase.from('analytics_events').insert({
+  const { error } = await supabase.from('analytics_events').insert([{
     event_name: eventName,
-    event_data: eventData,
+    event_data: eventData as Record<string, unknown>,
     session_id: getSessionId(),
     page_url: window.location.href,
     page_title: document.title,
     referrer: document.referrer || null,
     device_type: getDeviceType(),
     language: document.documentElement.lang || 'en',
-    ...utmParams,
-  });
+    utm_source: utmParams.utm_source || null,
+    utm_medium: utmParams.utm_medium || null,
+    utm_campaign: utmParams.utm_campaign || null,
+    utm_term: utmParams.utm_term || null,
+    utm_content: utmParams.utm_content || null,
+  }]);
 
   if (error) {
     console.error('Analytics tracking error:', error);
