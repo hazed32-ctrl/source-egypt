@@ -29,6 +29,7 @@ import MegaMenu from './MegaMenu';
 import MobileDrawer from './MobileDrawer';
 import QuickSearch from './QuickSearch';
 import DynamicIcon from './DynamicIcon';
+import { ThemeToggle } from '@/components/theme';
 
 export const EnterpriseNavbar = () => {
   const { t } = useTranslation();
