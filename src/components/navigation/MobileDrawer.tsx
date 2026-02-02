@@ -11,6 +11,8 @@ import {
   LogOut,
   ArrowLeftRight,
   Phone,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { NavigationItem, NavigationCTA } from '@/hooks/useNavigation';
@@ -18,6 +20,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useApiAuth } from '@/contexts/ApiAuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useCompare } from '@/contexts/CompareContext';
+import { useThemeContext } from '@/components/theme';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import sourceLogo from '@/assets/source-logo.svg';
