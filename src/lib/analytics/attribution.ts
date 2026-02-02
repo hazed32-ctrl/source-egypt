@@ -81,7 +81,7 @@ export async function logSessionEvent(
         event_name: eventName,
         page_path: pagePath,
         entity_id: entityId,
-        meta: meta ? sanitizeMeta(meta) : {},
+        meta: meta ? JSON.parse(JSON.stringify(sanitizeMeta(meta))) : {},
       }]);
     } catch (err) {
       console.error('Failed to log session event:', err);

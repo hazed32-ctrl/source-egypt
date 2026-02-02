@@ -126,7 +126,14 @@ const LeadsIntelligence = () => {
         .limit(100);
 
       if (error) throw error;
-      setLeads((data || []) as LeadWithAttribution[]);
+      // Parse the leads data with proper type handling
+      const parsedLeads = (data || []).map(lead => ({
+        ...lead,
+        last_events_summary: Array.isArray(lead.last_events_summary) 
+          ? lead.last_events_summary as unknown as SessionEvent[]
+          : [],
+      })) as LeadWithAttribution[];
+      setLeads(parsedLeads);
     } catch (err) {
       console.error('Error fetching leads:', err);
     } finally {
