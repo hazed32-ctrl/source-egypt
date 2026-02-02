@@ -1,35 +1,156 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Building2, FileText, RefreshCw, ArrowRight } from 'lucide-react';
+import { Building2, FileText, RefreshCw } from 'lucide-react';
 import PortalLayout from '@/components/portal/PortalLayout';
 import { useApiAuth } from '@/contexts/ApiAuthContext';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
-const dashboardTiles = [
+const dashboardActions = [
   {
     id: 'assets',
     title: 'My Assets',
     description: 'View and manage your property portfolio',
     icon: Building2,
     path: '/client-portal/assets',
-    gradient: 'from-primary/20 to-primary/5',
+    enabled: true,
   },
   {
     id: 'documents',
-    title: 'Property Documents',
+    title: 'Documents',
     description: 'Access contracts and legal documents',
     icon: FileText,
     path: '/client-portal/documents',
-    gradient: 'from-blue-500/20 to-blue-500/5',
+    enabled: true,
   },
   {
     id: 'resale',
-    title: 'Request a Resale',
+    title: 'Resale Request',
     description: 'Submit a resale request for your property',
     icon: RefreshCw,
     path: '/client-portal/resale',
-    gradient: 'from-emerald-500/20 to-emerald-500/5',
+    enabled: true,
   },
 ];
+
+const CircleAction = ({ 
+  action, 
+  index 
+}: { 
+  action: typeof dashboardActions[0]; 
+  index: number;
+}) => {
+  const Icon = action.icon;
+  
+  const content = (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ 
+        duration: 0.4, 
+        delay: index * 0.1,
+        ease: [0.25, 0.46, 0.45, 0.94]
+      }}
+      className="flex flex-col items-center gap-4"
+    >
+      {/* Circular Icon Container */}
+      <div
+        className={cn(
+          // Base circle styles
+          "relative w-28 h-28 md:w-32 md:h-32 rounded-full",
+          "flex items-center justify-center",
+          // Glass effect
+          "bg-gradient-to-br from-secondary/60 to-secondary/30",
+          "backdrop-blur-md",
+          "border border-border/30",
+          // Shadow and glow
+          "shadow-lg shadow-black/20",
+          // Transitions
+          "transition-all duration-300 ease-out",
+          // Hover effects (desktop)
+          action.enabled && [
+            "group-hover:scale-110",
+            "group-hover:border-primary/50",
+            "group-hover:shadow-gold",
+          ],
+          // Focus styles
+          "group-focus-visible:outline-none",
+          "group-focus-visible:ring-2 group-focus-visible:ring-primary",
+          "group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-background",
+          // Disabled state
+          !action.enabled && "opacity-50 cursor-not-allowed"
+        )}
+      >
+        {/* Inner glow effect */}
+        <div 
+          className={cn(
+            "absolute inset-2 rounded-full",
+            "bg-gradient-to-br from-primary/10 to-transparent",
+            "opacity-0 transition-opacity duration-300",
+            action.enabled && "group-hover:opacity-100"
+          )}
+        />
+        
+        {/* Icon */}
+        <Icon 
+          className={cn(
+            "relative z-10 w-10 h-10 md:w-12 md:h-12",
+            "text-primary transition-all duration-300",
+            action.enabled && "group-hover:scale-110 group-hover:text-primary"
+          )} 
+          strokeWidth={1.5}
+        />
+      </div>
+
+      {/* Label */}
+      <span 
+        className={cn(
+          "text-sm md:text-base font-medium text-foreground",
+          "transition-colors duration-300",
+          action.enabled && "group-hover:text-primary"
+        )}
+      >
+        {action.title}
+      </span>
+    </motion.div>
+  );
+
+  if (!action.enabled) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="group cursor-not-allowed" aria-disabled="true">
+              {content}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>This feature is currently unavailable</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Link
+            to={action.path}
+            className="group focus:outline-none"
+            aria-label={`${action.title}: ${action.description}`}
+          >
+            {content}
+          </Link>
+        </TooltipTrigger>
+        <TooltipContent className="glass-card border-border/50">
+          <p>{action.description}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+};
 
 const ClientDashboard = () => {
   const { user } = useApiAuth();
@@ -37,75 +158,40 @@ const ClientDashboard = () => {
   return (
     <PortalLayout
       title="Welcome Back"
-      subtitle={`Here's an overview of your property portfolio`}
+      subtitle="Here's an overview of your property portfolio"
     >
-      {/* Dashboard Tiles */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {dashboardTiles.map((tile, index) => (
-          <motion.div
-            key={tile.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: index * 0.1 }}
-          >
-            <Link
-              to={tile.path}
-              className="group block"
-            >
-              <div className={`
-                glass-card p-8 border border-border/20 
-                hover:border-primary/30 transition-all duration-300
-                hover:shadow-gold relative overflow-hidden
-              `}>
-                {/* Gradient Background */}
-                <div className={`
-                  absolute inset-0 bg-gradient-to-br ${tile.gradient} 
-                  opacity-0 group-hover:opacity-100 transition-opacity duration-300
-                `} />
-                
-                {/* Content */}
-                <div className="relative z-10">
-                  {/* Circular Icon Container */}
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 
-                    border border-primary/20 flex items-center justify-center mb-6
-                    group-hover:scale-110 group-hover:shadow-gold transition-all duration-300">
-                    <tile.icon className="w-8 h-8 text-primary" />
-                  </div>
-
-                  <h3 className="font-display text-xl font-semibold text-foreground mb-2 
-                    group-hover:text-primary transition-colors">
-                    {tile.title}
-                  </h3>
-                  
-                  <p className="text-muted-foreground text-sm mb-4">
-                    {tile.description}
-                  </p>
-
-                  <div className="flex items-center gap-2 text-primary opacity-0 
-                    group-hover:opacity-100 transition-opacity duration-300">
-                    <span className="text-sm font-medium">View Details</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </div>
-                </div>
-              </div>
-            </Link>
-          </motion.div>
+      {/* Circular Actions Grid */}
+      <div 
+        className={cn(
+          "flex items-center justify-center gap-8 md:gap-12 lg:gap-16",
+          // Desktop: horizontal row
+          "flex-row",
+          // Mobile/Tablet: vertical column
+          "max-lg:flex-col",
+          // Padding for touch targets
+          "py-8 md:py-12"
+        )}
+        role="navigation"
+        aria-label="Dashboard actions"
+      >
+        {dashboardActions.map((action, index) => (
+          <CircleAction key={action.id} action={action} index={index} />
         ))}
       </div>
 
-      {/* Quick Stats */}
+      {/* Quick Overview Card */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.4 }}
-        className="mt-10"
+        className="mt-8"
       >
-        <div className="glass-card p-6 border border-border/20">
-          <h2 className="font-display text-xl font-semibold text-foreground mb-4">
+        <div className="glass-card p-6 border border-border/20 rounded-xl">
+          <h2 className="font-display text-xl font-semibold text-foreground mb-3">
             Quick Overview
           </h2>
-          <p className="text-muted-foreground">
-            Navigate through the menu to access your assets, documents, and resale options.
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            Navigate through the options above to access your assets, documents, and resale options.
             For any assistance, please contact your account manager.
           </p>
         </div>
