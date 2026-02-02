@@ -222,6 +222,9 @@ export const EnterpriseNavbar = () => {
                   <QuickSearch variant="header" />
                 </div>
 
+                {/* Theme Toggle */}
+                <ThemeToggle className="hidden sm:flex" />
+
                 {/* Language Switcher */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
