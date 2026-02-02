@@ -10,7 +10,6 @@ import {
   ChevronDown,
   ArrowLeftRight,
 } from 'lucide-react';
-import * as LucideIcons from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -29,13 +28,7 @@ import sourceLogo from '@/assets/source-logo.svg';
 import MegaMenu from './MegaMenu';
 import MobileDrawer from './MobileDrawer';
 import QuickSearch from './QuickSearch';
-
-// Dynamic icon component
-const DynamicIcon = ({ name, className }: { name: string | null; className?: string }) => {
-  if (!name) return null;
-  const Icon = (LucideIcons as Record<string, React.ComponentType<{ className?: string }>>)[name];
-  return Icon ? <Icon className={className} /> : null;
-};
+import DynamicIcon from './DynamicIcon';
 
 export const EnterpriseNavbar = () => {
   const { t } = useTranslation();

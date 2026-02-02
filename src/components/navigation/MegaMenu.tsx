@@ -2,10 +2,10 @@ import { useRef, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
-import * as LucideIcons from 'lucide-react';
 import { NavigationItem } from '@/hooks/useNavigation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
+import DynamicIcon from './DynamicIcon';
 
 interface MegaMenuProps {
   item: NavigationItem;
@@ -13,13 +13,6 @@ interface MegaMenuProps {
   onClose: () => void;
   getLabel: (item: { label_en: string; label_ar: string }) => string;
 }
-
-// Dynamic icon component
-const DynamicIcon = ({ name, className }: { name: string | null; className?: string }) => {
-  if (!name) return null;
-  const Icon = (LucideIcons as Record<string, React.ComponentType<{ className?: string }>>)[name];
-  return Icon ? <Icon className={className} /> : null;
-};
 
 export const MegaMenu = ({ item, isOpen, onClose, getLabel }: MegaMenuProps) => {
   const { isRTL } = useLanguage();
