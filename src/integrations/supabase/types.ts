@@ -54,35 +54,71 @@ export type Database = {
       }
       leads: {
         Row: {
+          agent_name: string | null
+          area_sqm: number | null
+          assigned_agent_id: string | null
+          assigned_by: string | null
+          budget_max: number | null
+          budget_min: number | null
+          city: string | null
           created_at: string
+          district: string | null
           email: string
           id: string
+          is_converted: boolean | null
           message: string | null
           name: string
+          payment_preference: string | null
           phone: string | null
           property_id: string | null
+          property_type: string | null
+          source: string | null
           status: string
           updated_at: string
         }
         Insert: {
+          agent_name?: string | null
+          area_sqm?: number | null
+          assigned_agent_id?: string | null
+          assigned_by?: string | null
+          budget_max?: number | null
+          budget_min?: number | null
+          city?: string | null
           created_at?: string
+          district?: string | null
           email: string
           id?: string
+          is_converted?: boolean | null
           message?: string | null
           name: string
+          payment_preference?: string | null
           phone?: string | null
           property_id?: string | null
+          property_type?: string | null
+          source?: string | null
           status?: string
           updated_at?: string
         }
         Update: {
+          agent_name?: string | null
+          area_sqm?: number | null
+          assigned_agent_id?: string | null
+          assigned_by?: string | null
+          budget_max?: number | null
+          budget_min?: number | null
+          city?: string | null
           created_at?: string
+          district?: string | null
           email?: string
           id?: string
+          is_converted?: boolean | null
           message?: string | null
           name?: string
+          payment_preference?: string | null
           phone?: string | null
           property_id?: string | null
+          property_type?: string | null
+          source?: string | null
           status?: string
           updated_at?: string
         }
@@ -229,6 +265,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          assigned_agent_id: string | null
           avatar_url: string | null
           created_at: string
           email: string | null
@@ -239,6 +276,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          assigned_agent_id?: string | null
           avatar_url?: string | null
           created_at?: string
           email?: string | null
@@ -249,6 +287,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          assigned_agent_id?: string | null
           avatar_url?: string | null
           created_at?: string
           email?: string | null
@@ -274,6 +313,7 @@ export type Database = {
           location: string | null
           price: number | null
           progress_percent: number | null
+          progress_status: string | null
           status: string
           title: string
           updated_at: string
@@ -291,6 +331,7 @@ export type Database = {
           location?: string | null
           price?: number | null
           progress_percent?: number | null
+          progress_status?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -308,6 +349,7 @@ export type Database = {
           location?: string | null
           price?: number | null
           progress_percent?: number | null
+          progress_status?: string | null
           status?: string
           title?: string
           updated_at?: string
@@ -402,6 +444,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_property_progress: { Args: { status: string }; Returns: number }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -415,7 +458,16 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "client"
+      app_role:
+        | "admin"
+        | "client"
+        | "sales_agent"
+        | "sales_manager"
+        | "marketer"
+      property_progress_status:
+        | "off_plan"
+        | "ready_to_deliver"
+        | "ready_to_live"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -543,7 +595,12 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "client"],
+      app_role: ["admin", "client", "sales_agent", "sales_manager", "marketer"],
+      property_progress_status: [
+        "off_plan",
+        "ready_to_deliver",
+        "ready_to_live",
+      ],
     },
   },
 } as const

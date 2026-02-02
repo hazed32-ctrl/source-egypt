@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Building2, FileText, RefreshCw } from 'lucide-react';
+import { Building2, FileText, RefreshCw, Phone } from 'lucide-react';
 import PortalLayout from '@/components/portal/PortalLayout';
 import { useApiAuth } from '@/contexts/ApiAuthContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { ContactAgentButton } from '@/components/client/ContactAgentButton';
 import { cn } from '@/lib/utils';
 
 const dashboardActions = [
@@ -164,11 +165,8 @@ const ClientDashboard = () => {
       <div 
         className={cn(
           "flex items-center justify-center gap-8 md:gap-12 lg:gap-16",
-          // Desktop: horizontal row
           "flex-row",
-          // Mobile/Tablet: vertical column
           "max-lg:flex-col",
-          // Padding for touch targets
           "py-8 md:py-12"
         )}
         role="navigation"
@@ -177,6 +175,19 @@ const ClientDashboard = () => {
         {dashboardActions.map((action, index) => (
           <CircleAction key={action.id} action={action} index={index} />
         ))}
+        
+        {/* Contact Agent Circle */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ 
+            duration: 0.4, 
+            delay: dashboardActions.length * 0.1,
+            ease: [0.25, 0.46, 0.45, 0.94]
+          }}
+        >
+          <ContactAgentButton variant="circle" />
+        </motion.div>
       </div>
 
       {/* Quick Overview Card */}

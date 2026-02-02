@@ -25,6 +25,7 @@ import Contact from "./pages/Contact";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 import Compare from "./pages/Compare";
+import FindProperty from "./pages/FindProperty";
 
 // Client Portal Pages (lazy loaded)
 const ClientDashboard = lazy(() => import("./pages/client/Dashboard"));
@@ -75,6 +76,7 @@ const AppContent = () => {
         <Route path="/contact" element={<Contact />} />
         <Route path="/about" element={<About />} />
         <Route path="/compare" element={<Compare />} />
+        <Route path="/find-property" element={<FindProperty />} />
         
         {/* Client Portal Routes */}
         <Route

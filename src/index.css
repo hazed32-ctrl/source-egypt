@@ -1,4 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Arabic:wght@300;400;500;600;700&display=swap');
+/* Professional Typography System
+   English: Inter (clean, modern, excellent readability)
+   Arabic: IBM Plex Arabic (professional, harmonious with Inter)
+   Display: Playfair Display (luxury headings)
+*/
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,7 +11,7 @@
 
 /* Luxury Real Estate Design System
    Dark Glassmorphism + Gold Accents
-   Inspired by private banking and premium SaaS
+   Professional Typography + RTL Support
 */
 
 @layer base {
@@ -115,39 +120,93 @@
 
   html {
     scroll-behavior: smooth;
+    /* Prevent font-size zooming on mobile */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
     background: var(--gradient-dark);
     min-height: 100vh;
+    /* Improve text rendering */
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
-  /* RTL Support */
+  /* RTL Support with IBM Plex Arabic */
   [dir="rtl"] body {
-    font-family: 'Noto Sans Arabic', 'Inter', system-ui, sans-serif;
+    font-family: 'IBM Plex Sans Arabic', 'Inter', system-ui, sans-serif;
+    letter-spacing: 0;
   }
 
-  /* Typography */
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Playfair Display', serif;
-    @apply font-medium tracking-tight;
+  /* Typography Scale */
+  h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    @apply text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight leading-[1.1];
   }
 
+  h2 {
+    font-family: 'Playfair Display', Georgia, serif;
+    @apply text-3xl md:text-4xl lg:text-5xl font-semibold tracking-tight leading-[1.15];
+  }
+
+  h3 {
+    font-family: 'Playfair Display', Georgia, serif;
+    @apply text-2xl md:text-3xl font-semibold tracking-tight leading-[1.2];
+  }
+
+  h4 {
+    font-family: 'Playfair Display', Georgia, serif;
+    @apply text-xl md:text-2xl font-medium tracking-tight leading-[1.25];
+  }
+
+  h5, h6 {
+    font-family: 'Inter', system-ui, sans-serif;
+    @apply text-lg md:text-xl font-semibold tracking-tight leading-[1.3];
+  }
+
+  /* Arabic Headings */
   [dir="rtl"] h1,
   [dir="rtl"] h2,
   [dir="rtl"] h3,
-  [dir="rtl"] h4,
+  [dir="rtl"] h4 {
+    font-family: 'IBM Plex Sans Arabic', serif;
+    letter-spacing: 0;
+  }
+
   [dir="rtl"] h5,
   [dir="rtl"] h6 {
-    font-family: 'Noto Sans Arabic', serif;
+    font-family: 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  }
+
+  /* Body Text */
+  p {
+    @apply text-base leading-relaxed;
+  }
+
+  /* Small/Label Text */
+  .text-label {
+    @apply text-sm font-medium tracking-wide uppercase;
+  }
+
+  /* Caption Text */
+  .text-caption {
+    @apply text-xs text-muted-foreground leading-relaxed;
   }
 
   /* Selection */
   ::selection {
     background: hsl(var(--primary) / 0.3);
     color: hsl(var(--foreground));
+  }
+
+  /* Focus Visible */
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
   }
 }
 
