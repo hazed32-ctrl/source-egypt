@@ -47,6 +47,9 @@ const ManageInventory = lazy(() => import("./pages/admin/ManageInventory"));
 const ManageLeads = lazy(() => import("./pages/admin/ManageLeads"));
 const ManageCMS = lazy(() => import("./pages/admin/ManageCMS"));
 const GoogleSyncSettings = lazy(() => import("./pages/admin/GoogleSyncSettings"));
+const AdminAnalytics = lazy(() => import("./pages/admin/Analytics"));
+const AdminIntegrations = lazy(() => import("./pages/admin/Integrations"));
+const AdminSEOAnalyzer = lazy(() => import("./pages/admin/SEOAnalyzer"));
 
 // Agent Pages (lazy loaded)
 const AgentDashboard = lazy(() => import("./pages/agent/Dashboard"));
