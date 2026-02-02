@@ -162,7 +162,9 @@ export type Database = {
           agent_name: string | null
           area_sqm: number | null
           assigned_agent_id: string | null
+          assigned_at: string | null
           assigned_by: string | null
+          browser_language: string | null
           budget_max: number | null
           budget_min: number | null
           city: string | null
@@ -171,21 +173,34 @@ export type Database = {
           email: string
           id: string
           is_converted: boolean | null
+          landing_page: string | null
+          last_events_summary: Json | null
+          last_page_before_submit: string | null
+          lead_device_type: string | null
           message: string | null
           name: string
           payment_preference: string | null
           phone: string | null
           property_id: string | null
           property_type: string | null
+          referrer_domain: string | null
+          session_id: string | null
           source: string | null
           status: string
           updated_at: string
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
         }
         Insert: {
           agent_name?: string | null
           area_sqm?: number | null
           assigned_agent_id?: string | null
+          assigned_at?: string | null
           assigned_by?: string | null
+          browser_language?: string | null
           budget_max?: number | null
           budget_min?: number | null
           city?: string | null
@@ -194,21 +209,34 @@ export type Database = {
           email: string
           id?: string
           is_converted?: boolean | null
+          landing_page?: string | null
+          last_events_summary?: Json | null
+          last_page_before_submit?: string | null
+          lead_device_type?: string | null
           message?: string | null
           name: string
           payment_preference?: string | null
           phone?: string | null
           property_id?: string | null
           property_type?: string | null
+          referrer_domain?: string | null
+          session_id?: string | null
           source?: string | null
           status?: string
           updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
         }
         Update: {
           agent_name?: string | null
           area_sqm?: number | null
           assigned_agent_id?: string | null
+          assigned_at?: string | null
           assigned_by?: string | null
+          browser_language?: string | null
           budget_max?: number | null
           budget_min?: number | null
           city?: string | null
@@ -217,15 +245,26 @@ export type Database = {
           email?: string
           id?: string
           is_converted?: boolean | null
+          landing_page?: string | null
+          last_events_summary?: Json | null
+          last_page_before_submit?: string | null
+          lead_device_type?: string | null
           message?: string | null
           name?: string
           payment_preference?: string | null
           phone?: string | null
           property_id?: string | null
           property_type?: string | null
+          referrer_domain?: string | null
+          session_id?: string | null
           source?: string | null
           status?: string
           updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
         }
         Relationships: [
           {
@@ -499,6 +538,36 @@ export type Database = {
           },
         ]
       }
+      session_events: {
+        Row: {
+          created_at: string
+          entity_id: string | null
+          event_name: string
+          id: string
+          meta: Json | null
+          page_path: string | null
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          entity_id?: string | null
+          event_name: string
+          id?: string
+          meta?: Json | null
+          page_path?: string | null
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string | null
+          event_name?: string
+          id?: string
+          meta?: Json | null
+          page_path?: string | null
+          session_id?: string
+        }
+        Relationships: []
+      }
       settings: {
         Row: {
           created_at: string
@@ -549,6 +618,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_old_session_events: { Args: never; Returns: undefined }
       get_property_progress: { Args: { status: string }; Returns: number }
       get_user_role: {
         Args: { _user_id: string }
