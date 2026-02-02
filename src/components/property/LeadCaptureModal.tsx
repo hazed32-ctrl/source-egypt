@@ -89,7 +89,7 @@ export const LeadCaptureModal = ({
         last_page_before_submit: attribution.last_page_before_submit,
         lead_device_type: attribution.lead_device_type,
         browser_language: attribution.browser_language,
-        last_events_summary: attribution.last_events_summary,
+        last_events_summary: JSON.parse(JSON.stringify(attribution.last_events_summary)),
       }]);
 
       if (error) throw error;
