@@ -407,6 +407,84 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_settings: {
+        Row: {
+          created_at: string
+          email_enabled: boolean
+          id: string
+          in_app_enabled: boolean
+          notification_type: Database["public"]["Enums"]["notification_type"]
+          recipient_roles: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email_enabled?: boolean
+          id?: string
+          in_app_enabled?: boolean
+          notification_type: Database["public"]["Enums"]["notification_type"]
+          recipient_roles?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email_enabled?: boolean
+          id?: string
+          in_app_enabled?: boolean
+          notification_type?: Database["public"]["Enums"]["notification_type"]
+          recipient_roles?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          entity_id: string | null
+          entity_type:
+            | Database["public"]["Enums"]["notification_entity_type"]
+            | null
+          id: string
+          is_read: boolean
+          metadata: Json | null
+          recipient_user_id: string
+          severity: Database["public"]["Enums"]["notification_severity"]
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?:
+            | Database["public"]["Enums"]["notification_entity_type"]
+            | null
+          id?: string
+          is_read?: boolean
+          metadata?: Json | null
+          recipient_user_id: string
+          severity?: Database["public"]["Enums"]["notification_severity"]
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?:
+            | Database["public"]["Enums"]["notification_entity_type"]
+            | null
+          id?: string
+          is_read?: boolean
+          metadata?: Json | null
+          recipient_user_id?: string
+          severity?: Database["public"]["Enums"]["notification_severity"]
+          title?: string
+          type?: Database["public"]["Enums"]["notification_type"]
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           assigned_agent_id: string | null
@@ -619,7 +697,24 @@ export type Database = {
     }
     Functions: {
       cleanup_old_session_events: { Args: never; Returns: undefined }
+      create_notification: {
+        Args: {
+          p_body: string
+          p_entity_id?: string
+          p_entity_type?: Database["public"]["Enums"]["notification_entity_type"]
+          p_metadata?: Json
+          p_recipient_user_id: string
+          p_severity?: Database["public"]["Enums"]["notification_severity"]
+          p_title: string
+          p_type: Database["public"]["Enums"]["notification_type"]
+        }
+        Returns: string
+      }
       get_property_progress: { Args: { status: string }; Returns: number }
+      get_unread_notification_count: {
+        Args: { p_user_id: string }
+        Returns: number
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -639,6 +734,24 @@ export type Database = {
         | "sales_agent"
         | "sales_manager"
         | "marketer"
+      notification_entity_type:
+        | "lead"
+        | "property"
+        | "document"
+        | "message"
+        | "resale_request"
+        | "booking"
+      notification_severity: "info" | "success" | "warning" | "critical"
+      notification_type:
+        | "lead_created"
+        | "lead_assigned"
+        | "document_added"
+        | "resale_request"
+        | "message_received"
+        | "property_status_changed"
+        | "booking_request"
+        | "agent_submission_approved"
+        | "agent_submission_rejected"
       property_progress_status:
         | "off_plan"
         | "ready_to_deliver"
@@ -771,6 +884,26 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "client", "sales_agent", "sales_manager", "marketer"],
+      notification_entity_type: [
+        "lead",
+        "property",
+        "document",
+        "message",
+        "resale_request",
+        "booking",
+      ],
+      notification_severity: ["info", "success", "warning", "critical"],
+      notification_type: [
+        "lead_created",
+        "lead_assigned",
+        "document_added",
+        "resale_request",
+        "message_received",
+        "property_status_changed",
+        "booking_request",
+        "agent_submission_approved",
+        "agent_submission_rejected",
+      ],
       property_progress_status: [
         "off_plan",
         "ready_to_deliver",
