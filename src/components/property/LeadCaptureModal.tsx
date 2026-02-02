@@ -44,11 +44,11 @@ export const LeadCaptureModal = ({
   });
 
   // Log popup shown event when modal opens
-  useState(() => {
+  useEffect(() => {
     if (isOpen) {
       logSessionEvent(SESSION_EVENT_TYPES.LEAD_POPUP_SHOWN);
     }
-  });
+  }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
