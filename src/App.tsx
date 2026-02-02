@@ -50,6 +50,7 @@ const GoogleSyncSettings = lazy(() => import("./pages/admin/GoogleSyncSettings")
 const AdminAnalytics = lazy(() => import("./pages/admin/Analytics"));
 const AdminIntegrations = lazy(() => import("./pages/admin/Integrations"));
 const AdminSEOAnalyzer = lazy(() => import("./pages/admin/SEOAnalyzer"));
+const LeadsIntelligence = lazy(() => import("./pages/admin/LeadsIntelligence"));
 
 // Agent Pages (lazy loaded)
 const AgentDashboard = lazy(() => import("./pages/agent/Dashboard"));
