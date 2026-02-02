@@ -246,8 +246,23 @@ export const MobileDrawer = ({ isOpen, onClose, items, cta, getLabel }: MobileDr
 
             {/* Footer */}
             <div className="sticky bottom-0 p-4 border-t border-border/30 bg-background space-y-3">
-              {/* Language Switcher */}
+              {/* Theme & Language Row */}
               <div className="flex items-center gap-2">
+                {/* Theme Toggle */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={toggleTheme}
+                  className="border-border/50"
+                  aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+                >
+                  {isDark ? (
+                    <Sun className="w-4 h-4" />
+                  ) : (
+                    <Moon className="w-4 h-4" />
+                  )}
+                </Button>
+                
                 <Button
                   variant={language === 'en' ? 'default' : 'outline'}
                   size="sm"
