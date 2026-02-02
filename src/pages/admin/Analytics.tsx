@@ -4,24 +4,24 @@
  */
 
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   BarChart3,
   Users,
   Eye,
-  MousePointerClick,
   TrendingUp,
   Phone,
   MessageCircle,
-  Filter,
   Calendar,
   Monitor,
   Smartphone,
   Tablet,
-  Globe,
+  ChevronRight,
 } from 'lucide-react';
 import PortalLayout from '@/components/portal/PortalLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
@@ -203,8 +203,16 @@ const AnalyticsDashboard = () => {
       title="Analytics"
       subtitle="Track traffic, user behavior, and conversions"
     >
-      {/* Date Range Filter */}
-      <div className="flex justify-end mb-6">
+      {/* Quick Actions */}
+      <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+        <Link to="/admin/leads-intelligence">
+          <Button variant="outline" className="gap-2 border-primary/20 hover:border-primary/40">
+            <Users className="w-4 h-4" />
+            Leads Intelligence
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </Link>
+        
         <Select value={dateRange} onValueChange={setDateRange}>
           <SelectTrigger className="w-40 input-luxury">
             <Calendar className="w-4 h-4 mr-2" />

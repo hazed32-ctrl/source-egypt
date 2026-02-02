@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
-import { X, Phone, Mail, User, Loader2, Unlock } from 'lucide-react';
+import { Phone, Mail, User, Loader2, Unlock, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +11,9 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { PropertyPreferences } from './PropertyFinder';
+import { getLeadAttribution, logSessionEvent, SESSION_EVENT_TYPES } from '@/lib/analytics/attribution';
+import { analytics } from '@/lib/analytics';
+import { getConsentState } from '@/lib/analytics/utils';
 
 interface LeadCaptureModalProps {
   isOpen: boolean;
@@ -40,6 +43,13 @@ export const LeadCaptureModal = ({
     phone: '',
   });
 
+  // Log popup shown event when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      logSessionEvent(SESSION_EVENT_TYPES.LEAD_POPUP_SHOWN);
+    }
+  }, [isOpen]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -51,7 +61,10 @@ export const LeadCaptureModal = ({
 
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.from('leads').insert({
+      // Get attribution data (respects consent)
+      const attribution = getLeadAttribution();
+      
+      const { error } = await supabase.from('leads').insert([{
         name: form.name,
         email: form.email,
         phone: form.phone,
@@ -64,9 +77,25 @@ export const LeadCaptureModal = ({
         area_sqm: preferences?.areaSqm,
         payment_preference: preferences?.paymentPreference,
         status: 'new',
-      });
+        // Attribution data
+        session_id: attribution.session_id,
+        utm_source: attribution.utm_source,
+        utm_medium: attribution.utm_medium,
+        utm_campaign: attribution.utm_campaign,
+        utm_term: attribution.utm_term,
+        utm_content: attribution.utm_content,
+        referrer_domain: attribution.referrer_domain,
+        landing_page: attribution.landing_page,
+        last_page_before_submit: attribution.last_page_before_submit,
+        lead_device_type: attribution.lead_device_type,
+        browser_language: attribution.browser_language,
+        last_events_summary: JSON.parse(JSON.stringify(attribution.last_events_summary)),
+      }]);
 
       if (error) throw error;
+
+      // Track lead submit event
+      analytics.trackLeadSubmit('property_finder', undefined, 'lead_capture_modal');
 
       toast.success(
         language === 'ar' 
@@ -85,6 +114,8 @@ export const LeadCaptureModal = ({
       setIsSubmitting(false);
     }
   };
+
+  const consent = getConsentState();
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -188,11 +219,24 @@ export const LeadCaptureModal = ({
             </Button>
           </form>
 
-          <p className="text-xs text-center text-muted-foreground">
-            {language === 'ar' 
-              ? 'بيانتك آمنة معنا ولن يتم مشاركتها مع أي طرف ثالث'
-              : 'Your data is secure and will not be shared with third parties'}
-          </p>
+          {/* Privacy messaging */}
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/5 border border-primary/10">
+            <Shield className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+            <p className="text-xs text-muted-foreground">
+              {language === 'ar' 
+                ? 'نستخدم بياناتك لمطابقتك مع أفضل الخيارات. بياناتك آمنة ولن يتم مشاركتها.'
+                : 'We use your data to match you with the best options. Your data is secure and will not be shared.'}
+            </p>
+          </div>
+
+          {/* Consent indicator */}
+          {consent.analytics && (
+            <p className="text-xs text-center text-muted-foreground/60">
+              {language === 'ar' 
+                ? 'يتم تتبع تفضيلات البحث لتحسين توصياتك'
+                : 'Your search preferences are being tracked to improve recommendations'}
+            </p>
+          )}
         </motion.div>
       </DialogContent>
     </Dialog>

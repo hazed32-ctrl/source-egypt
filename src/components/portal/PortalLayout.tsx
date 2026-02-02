@@ -43,6 +43,7 @@ const adminNavItems = [
   { path: '/admin/properties', label: 'Properties', icon: Building2 },
   { path: '/admin/inventory', label: 'Inventory', icon: Package },
   { path: '/admin/leads', label: 'Leads', icon: MessageSquare },
+  { path: '/admin/leads-intelligence', label: 'Leads Intelligence', icon: MessageSquare },
   { path: '/admin/documents', label: 'Documents', icon: FileText },
   { path: '/admin/resale', label: 'Resale Requests', icon: RefreshCw },
   { path: '/admin/cms', label: 'CMS', icon: Layers },

@@ -50,6 +50,7 @@ const GoogleSyncSettings = lazy(() => import("./pages/admin/GoogleSyncSettings")
 const AdminAnalytics = lazy(() => import("./pages/admin/Analytics"));
 const AdminIntegrations = lazy(() => import("./pages/admin/Integrations"));
 const AdminSEOAnalyzer = lazy(() => import("./pages/admin/SEOAnalyzer"));
+const LeadsIntelligence = lazy(() => import("./pages/admin/LeadsIntelligence"));
 
 // Agent Pages (lazy loaded)
 const AgentDashboard = lazy(() => import("./pages/agent/Dashboard"));
@@ -283,6 +284,16 @@ const AppContent = () => {
             <ProtectedRoute requiredRole={['admin', 'super_admin']}>
               <Suspense fallback={null}>
                 <AdminSEOAnalyzer />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/leads-intelligence"
+          element={
+            <ProtectedRoute requiredRole={['admin', 'super_admin', 'marketer', 'sales_manager']}>
+              <Suspense fallback={null}>
+                <LeadsIntelligence />
               </Suspense>
             </ProtectedRoute>
           }
