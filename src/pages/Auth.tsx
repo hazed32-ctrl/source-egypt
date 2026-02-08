@@ -11,6 +11,7 @@ import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { z } from 'zod';
 import sourceLogo from '@/assets/source-logo.svg';
 import ForgotPasswordModal from '@/components/auth/ForgotPasswordModal';
+import { analytics } from '@/lib/analytics';
 
 const loginSchema = z.object({
   email: z.string().trim().email({ message: "Invalid email address" }),
