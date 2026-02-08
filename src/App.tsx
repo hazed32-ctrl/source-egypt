@@ -154,6 +154,19 @@ const AppContent = () => {
               {/* Catch-all */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+    </>
+  );
+};
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <LanguageProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AppContent />
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>
