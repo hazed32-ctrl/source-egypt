@@ -71,6 +71,11 @@ const PropertyDetails = () => {
         }
         setProperty(data);
         
+        // Track property view
+        const title = data.translations?.en?.title || data.title;
+        analytics.trackPropertyView(data.id, title, data.price);
+        logSessionEvent(SESSION_EVENT_TYPES.PROPERTY_VIEWED, data.id);
+        
         // Fetch similar properties
         // In a real implementation, this would be a separate API call
         const allProperties = await mockPropertiesApi.list({ limit: 10 });
