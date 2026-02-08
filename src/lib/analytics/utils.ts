@@ -98,12 +98,16 @@ export function getConsentState(): { analytics: boolean; marketing: boolean } {
   
   try {
     const parsed = JSON.parse(consent);
+    // Handle legacy boolean consent (react-cookie-consent stores 'true'/'false')
+    if (typeof parsed === 'boolean') {
+      return { analytics: parsed, marketing: parsed };
+    }
     return {
       analytics: parsed.analytics ?? false,
       marketing: parsed.marketing ?? false,
     };
   } catch {
-    // Simple boolean consent (react-cookie-consent default)
+    // Non-JSON string fallback
     return { analytics: consent === 'true', marketing: consent === 'true' };
   }
 }
