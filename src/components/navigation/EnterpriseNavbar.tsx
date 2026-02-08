@@ -215,7 +215,7 @@ export const EnterpriseNavbar = () => {
               </div>
 
               {/* Right: Actions */}
-
+              <div className="flex items-center gap-2">
                 {/* Theme Toggle */}
                 <ThemeToggle className="hidden sm:flex" />
 
