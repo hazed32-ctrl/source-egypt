@@ -266,14 +266,21 @@ const PropertyDetails = () => {
           {/* Actions */}
           <div className="absolute top-4 right-4 flex gap-2">
             <button
-              onClick={() => setIsFavorite(!isFavorite)}
+              onClick={() => {
+                const next = !isFavorite;
+                setIsFavorite(next);
+                analytics.trackFavoriteClick(property.id, next);
+              }}
               className={`w-10 h-10 rounded-full backdrop-blur-sm flex items-center justify-center transition-all ${
                 isFavorite ? 'bg-primary text-primary-foreground' : 'bg-background/50 text-foreground hover:bg-background/80'
               }`}
             >
               <Heart className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />
             </button>
-            <button className="w-10 h-10 rounded-full bg-background/50 backdrop-blur-sm flex items-center justify-center text-foreground hover:bg-background/80 transition-all">
+            <button
+              onClick={() => analytics.trackShareClick(property.id, 'share_button')}
+              className="w-10 h-10 rounded-full bg-background/50 backdrop-blur-sm flex items-center justify-center text-foreground hover:bg-background/80 transition-all"
+            >
               <Share2 className="w-5 h-5" />
             </button>
           </div>
