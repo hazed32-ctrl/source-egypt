@@ -5,6 +5,7 @@
 
 import CookieConsent from 'react-cookie-consent';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { analytics } from '@/lib/analytics';
 
 const ConsentBanner = () => {
   const { language } = useLanguage();
