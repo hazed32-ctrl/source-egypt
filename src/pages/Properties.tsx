@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
-import { Grid, List, SlidersHorizontal } from 'lucide-react';
+import { Grid, List } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import PropertyCard from '@/components/property/PropertyCard';
-import SearchFilters from '@/components/property/SearchFilters';
+import PropertySearchBar from '@/components/property/PropertySearchBar';
 import { Button } from '@/components/ui/button';
 import {
   Select,
