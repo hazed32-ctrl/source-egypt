@@ -38,6 +38,8 @@ import MortgageCalculator from '@/components/property/MortgageCalculator';
 import CompareBar from '@/components/compare/CompareBar';
 import { mockPropertiesApi } from '@/lib/api';
 import { Property, PropertyListItem } from '@/lib/api/types';
+import { analytics } from '@/lib/analytics';
+import { logSessionEvent, SESSION_EVENT_TYPES } from '@/lib/analytics/attribution';
 
 const PropertyDetails = () => {
   const { t, i18n } = useTranslation();
