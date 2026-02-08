@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import LoadingScreen from "@/components/loading/LoadingScreen";
+import { useLoadingScreen } from "@/hooks/useLoadingScreen";
 import "@/lib/i18n";
 
 // Public Pages
@@ -34,7 +36,13 @@ import Settings from "./pages/admin/Settings";
 
 const queryClient = new QueryClient();
 
-const App = () => (
+const AppContent = () => {
+  const { isLoading } = useLoadingScreen({ minDuration: 1500 });
+
+  return (
+    <>
+      <LoadingScreen isVisible={isLoading} />
+      <Routes>
   <QueryClientProvider client={queryClient}>
     <LanguageProvider>
       <AuthProvider>
