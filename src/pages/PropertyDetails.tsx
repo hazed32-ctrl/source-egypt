@@ -72,8 +72,8 @@ const PropertyDetails = () => {
         setProperty(data);
         
         // Track property view
-        const title = data.translations?.en?.title || data.title;
-        analytics.trackPropertyView(data.id, title, data.price);
+        const viewTitle = data.translations?.en?.title || 'Unknown';
+        analytics.trackPropertyView(data.id, viewTitle, data.price);
         logSessionEvent(SESSION_EVENT_TYPES.PROPERTY_VIEWED, data.id);
         
         // Fetch similar properties
