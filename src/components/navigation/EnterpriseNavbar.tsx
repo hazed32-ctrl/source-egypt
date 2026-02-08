@@ -298,16 +298,6 @@ export const EnterpriseNavbar = () => {
               </div>
             </div>
 
-            {/* Integrated Quick Search Bar (Search Pages) */}
-            {isSearchPage && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                className="pb-3 hidden md:block"
-              >
-                <QuickSearch variant="expanded" />
-              </motion.div>
-            )}
           </div>
         </div>
       </nav>
