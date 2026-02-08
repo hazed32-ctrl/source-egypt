@@ -27,7 +27,7 @@ import { cn } from '@/lib/utils';
 import sourceLogo from '@/assets/source-logo.svg';
 import MegaMenu from './MegaMenu';
 import MobileDrawer from './MobileDrawer';
-import QuickSearch from './QuickSearch';
+import DynamicIcon from './DynamicIcon';
 import DynamicIcon from './DynamicIcon';
 import { ThemeToggle } from '@/components/theme';
 
