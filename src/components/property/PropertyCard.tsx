@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import { Bed, Bath, Maximize, Heart, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import CompareToggle from '@/components/compare/CompareToggle';
 
 interface PropertyCardProps {
   id: string;
@@ -12,19 +11,13 @@ interface PropertyCardProps {
   location: string;
   price: number;
   salePrice?: number;
-  originalPrice?: number; // Alias for backwards compatibility
-  bedrooms?: number;
-  beds?: number;
-  bathrooms?: number;
-  baths?: number;
+  beds: number;
+  baths: number;
   area: number;
-  imageUrl?: string;
-  image?: string;
-  status: 'available' | 'reserved' | 'sold' | 'under_construction' | 'delivered';
+  image: string;
+  status: 'available' | 'reserved' | 'sold';
   tag?: 'hot' | 'new' | 'bestValue';
   constructionProgress?: number;
-  currency?: string;
-  featured?: boolean;
 }
 
 const PropertyCard = ({
@@ -33,30 +26,14 @@ const PropertyCard = ({
   location,
   price,
   salePrice,
-  originalPrice,
   beds,
-  bedrooms,
   baths,
-  bathrooms,
   area,
   image,
-  imageUrl,
   status,
   tag,
   constructionProgress,
-  currency = 'EGP',
-  featured,
 }: PropertyCardProps) => {
-  // Normalize props for backwards compatibility
-  const displayBeds = beds ?? bedrooms ?? 0;
-  const displayBaths = baths ?? bathrooms ?? 0;
-  const displayImage = image ?? imageUrl ?? '/placeholder.svg';
-  const displayOriginalPrice = originalPrice ?? salePrice;
-  
-  // Map status for display
-  const displayStatus = status === 'under_construction' || status === 'delivered' 
-    ? 'available' 
-    : status;
   const { t } = useTranslation();
 
   const formatPrice = (value: number) => {
@@ -68,20 +45,14 @@ const PropertyCard = ({
   };
 
   const getStatusBadge = () => {
-    const statusClasses: Record<string, string> = {
+    const statusClasses = {
       available: 'badge-available',
       reserved: 'badge-reserved',
       sold: 'badge-sold',
-      under_construction: 'bg-warning/20 text-warning border-warning/30',
-      delivered: 'bg-success/20 text-success border-success/30',
-    };
-    const statusLabels: Record<string, string> = {
-      under_construction: 'Under Construction',
-      delivered: 'Ready to Move',
     };
     return (
-      <Badge className={`${statusClasses[status] || statusClasses.available} text-xs`}>
-        {statusLabels[status] || t(`property.status.${displayStatus}`)}
+      <Badge className={`${statusClasses[status]} text-xs`}>
+        {t(`property.status.${status}`)}
       </Badge>
     );
   };
@@ -112,7 +83,7 @@ const PropertyCard = ({
         {/* Image */}
         <div className="relative aspect-[4/3] overflow-hidden">
           <img
-            src={displayImage}
+            src={image}
             alt={title}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
@@ -126,13 +97,10 @@ const PropertyCard = ({
             {getTagBadge()}
           </div>
 
-          {/* Action Buttons */}
-          <div className="absolute top-4 right-4 flex gap-2">
-            <CompareToggle propertyId={id} />
-            <button className="w-10 h-10 rounded-full bg-background/50 backdrop-blur-sm flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-background/80 transition-all duration-200">
-              <Heart className="w-5 h-5" />
-            </button>
-          </div>
+          {/* Favorite Button */}
+          <button className="absolute top-4 right-4 w-10 h-10 rounded-full bg-background/50 backdrop-blur-sm flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-background/80 transition-all duration-200">
+            <Heart className="w-5 h-5" />
+          </button>
 
           {/* Construction Progress */}
           {constructionProgress !== undefined && (
@@ -163,11 +131,11 @@ const PropertyCard = ({
           <div className="flex items-center gap-6 mb-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-1.5">
               <Bed className="w-4 h-4 text-primary" />
-              <span>{displayBeds} {t('property.beds')}</span>
+              <span>{beds} {t('property.beds')}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Bath className="w-4 h-4 text-primary" />
-              <span>{displayBaths} {t('property.baths')}</span>
+              <span>{baths} {t('property.baths')}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Maximize className="w-4 h-4 text-primary" />
@@ -178,18 +146,18 @@ const PropertyCard = ({
           {/* Price */}
           <div className="flex items-end justify-between">
             <div>
-              {displayOriginalPrice ? (
+              {salePrice ? (
                 <>
                   <p className="text-muted-foreground line-through text-sm">
-                    {formatPrice(displayOriginalPrice)} {currency}
+                    {formatPrice(price)} {t('common.currency')}
                   </p>
                   <p className="text-gold font-semibold text-xl">
-                    {formatPrice(price)} {currency}
+                    {formatPrice(salePrice)} {t('common.currency')}
                   </p>
                 </>
               ) : (
                 <p className="text-gold font-semibold text-xl">
-                  {formatPrice(price)} {currency}
+                  {formatPrice(price)} {t('common.currency')}
                 </p>
               )}
             </div>

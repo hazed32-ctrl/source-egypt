@@ -1,22 +1,52 @@
-import { useApiAuth } from '@/contexts/ApiAuthContext';
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
-// Extended role types including sales roles
-type AppRole = 'super_admin' | 'admin' | 'agent' | 'sales_agent' | 'sales_manager' | 'marketer' | 'client' | null;
+type AppRole = 'admin' | 'client' | null;
 
 export const useUserRole = () => {
-  const { user, isLoading } = useApiAuth();
+  const { user, isLoading: authLoading } = useAuth();
+  const [role, setRole] = useState<AppRole>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const role = ((user as unknown as { role?: AppRole })?.role ?? null) as AppRole;
+  useEffect(() => {
+    const fetchRole = async () => {
+      if (!user) {
+        setRole(null);
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error fetching user role:', error);
+          setRole(null);
+        } else {
+          setRole(data?.role as AppRole || 'client');
+        }
+      } catch (err) {
+        console.error('Error in useUserRole:', err);
+        setRole(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (!authLoading) {
+      fetchRole();
+    }
+  }, [user, authLoading]);
 
   return {
     role,
-    isAdmin: role === 'admin' || role === 'super_admin',
-    isSalesAgent: role === 'sales_agent',
-    isSalesManager: role === 'sales_manager',
-    isMarketer: role === 'marketer',
+    isAdmin: role === 'admin',
     isClient: role === 'client',
-    canViewLeads: role === 'admin' || role === 'super_admin' || role === 'sales_agent' || role === 'sales_manager' || role === 'marketer',
-    canAssignLeads: role === 'admin' || role === 'super_admin' || role === 'sales_manager',
-    isLoading,
+    isLoading: authLoading || isLoading,
   };
 };

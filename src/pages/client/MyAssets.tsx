@@ -4,7 +4,7 @@ import { Building2, MapPin, Loader2, AlertCircle } from 'lucide-react';
 import PortalLayout from '@/components/portal/PortalLayout';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { useApiAuth } from '@/contexts/ApiAuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Property {
@@ -21,7 +21,7 @@ interface Property {
 }
 
 const MyAssets = () => {
-  const { user } = useApiAuth();
+  const { user } = useAuth();
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

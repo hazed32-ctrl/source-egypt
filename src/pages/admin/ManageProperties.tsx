@@ -34,7 +34,7 @@ import {
 } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { supabase } from '@/integrations/supabase/client';
-import { useApiAuth } from '@/contexts/ApiAuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 interface Property {
@@ -61,7 +61,7 @@ interface UserOption {
 }
 
 const ManageProperties = () => {
-  const { user } = useApiAuth();
+  const { user } = useAuth();
   const [properties, setProperties] = useState<Property[]>([]);
   const [users, setUsers] = useState<UserOption[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -372,14 +372,14 @@ const ManageProperties = () => {
               <div>
                 <Label>Assign to User</Label>
                 <Select
-                  value={formData.assigned_user_id || 'unassigned'}
-                  onValueChange={(value) => setFormData({ ...formData, assigned_user_id: value === 'unassigned' ? '' : value })}
+                  value={formData.assigned_user_id}
+                  onValueChange={(value) => setFormData({ ...formData, assigned_user_id: value })}
                 >
                   <SelectTrigger className="input-luxury mt-1">
                     <SelectValue placeholder="Select user..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="unassigned">Unassigned</SelectItem>
+                    <SelectItem value="">Unassigned</SelectItem>
                     {users.map((u) => (
                       <SelectItem key={u.user_id} value={u.user_id}>
                         {u.full_name || u.email}

@@ -29,7 +29,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
-import { useApiAuth } from '@/contexts/ApiAuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 interface Document {
@@ -47,7 +47,7 @@ interface PropertyOption {
 }
 
 const ManageDocuments = () => {
-  const { user } = useApiAuth();
+  const { user } = useAuth();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [properties, setProperties] = useState<PropertyOption[]>([]);
   const [searchQuery, setSearchQuery] = useState('');

@@ -1,25 +1,20 @@
 import { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useApiAuth } from '@/contexts/ApiAuthContext';
-import { UserRole } from '@/lib/api/types';
+import { useAuth } from '@/contexts/AuthContext';
+import { useUserRole } from '@/hooks/useUserRole';
 import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  requiredRole?: UserRole | UserRole[];
-  redirectTo?: string;
+  requiredRole?: 'admin' | 'client';
 }
 
-const ProtectedRoute = ({ 
-  children, 
-  requiredRole,
-  redirectTo = '/auth'
-}: ProtectedRouteProps) => {
-  const { user, isLoading, isAuthenticated, hasRole } = useApiAuth();
+const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
+  const { user, isLoading: authLoading } = useAuth();
+  const { role, isLoading: roleLoading } = useUserRole();
   const location = useLocation();
 
-  // Show loading state
-  if (isLoading) {
+  if (authLoading || roleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -30,21 +25,15 @@ const ProtectedRoute = ({
     );
   }
 
-  // Not authenticated - redirect to auth
-  if (!isAuthenticated || !user) {
-    return <Navigate to={redirectTo} state={{ from: location }} replace />;
+  if (!user) {
+    return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  // Check role requirements
-  if (requiredRole && !hasRole(requiredRole)) {
-    // Determine where to redirect based on user's role
-    const fallbackPath = user.role === 'client' 
-      ? '/client-portal/dashboard'
-      : user.role === 'agent'
-      ? '/agent/dashboard'
-      : '/';
-    
-    return <Navigate to={fallbackPath} replace />;
+  // Check role requirement
+  if (requiredRole) {
+    if (requiredRole === 'admin' && role !== 'admin') {
+      return <Navigate to="/client-portal/dashboard" replace />;
+    }
   }
 
   return <>{children}</>;

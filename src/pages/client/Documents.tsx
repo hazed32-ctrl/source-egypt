@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { FileText, Download, Building2, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import PortalLayout from '@/components/portal/PortalLayout';
 import { Button } from '@/components/ui/button';
-import { useApiAuth } from '@/contexts/ApiAuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -20,7 +20,7 @@ interface Document {
 }
 
 const Documents = () => {
-  const { user } = useApiAuth();
+  const { user } = useAuth();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);

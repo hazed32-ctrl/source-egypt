@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { analytics } from '@/lib/analytics';
 
 const Contact = () => {
   const { t } = useTranslation();
@@ -27,9 +26,6 @@ const Contact = () => {
     
     // Simulate form submission
     await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Track contact form submission
-    analytics.trackContactSubmit({ name: formData.name, hasPhone: !!formData.phone });
     
     toast({
       title: t('contact.success'),
