@@ -129,16 +129,17 @@ const Compare = () => {
   useEffect(() => {
     const fetchAvailable = async () => {
       try {
-        // Fetch from edge function to get public properties
-        const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/compare-properties?ids=`,
-          { method: 'GET' }
-        );
-        
-        // Since edge function requires 2 IDs, we'll use a different approach
-        // For the selector, we'll fetch a sample of properties
-        // In production, you'd have a separate endpoint for listing
-        setAvailableProperties([]);
+        const { data, error: dbError } = await supabase
+          .from('properties')
+          .select('id, title, location, price, beds, baths, area, image_url, status, progress_percent, description')
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        if (dbError) {
+          console.error('Failed to fetch available properties:', dbError);
+          return;
+        }
+        setAvailableProperties(data || []);
       } catch (err) {
         console.error('Failed to fetch available properties:', err);
       }
