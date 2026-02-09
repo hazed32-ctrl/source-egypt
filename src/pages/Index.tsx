@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 import { ArrowRight, Building2, Users, Award, TrendingUp, Send, Loader2 } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import PropertyCard from '@/components/property/PropertyCard';
-import SearchFilters from '@/components/property/SearchFilters';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -185,15 +184,6 @@ const Index = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="max-w-3xl mx-auto"
-            >
-              <SearchFilters compact />
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
               className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
             >
               <Link to="/properties">
@@ -202,9 +192,9 @@ const Index = () => {
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
-              <Link to="/projects">
+              <Link to="/find-property">
                 <Button variant="outline" className="text-lg px-8 py-6 border-border/50 hover:border-primary/50 hover:bg-primary/5">
-                  {t('hero.viewProjects')}
+                  Find your property
                 </Button>
               </Link>
             </motion.div>

@@ -151,10 +151,6 @@ export const EnterpriseNavbar = () => {
 
               {/* Right: Actions */}
               <div className="flex items-center gap-2">
-                {/* Quick Search (Desktop) */}
-                <div className="hidden md:block">
-                  <QuickSearch variant="header" />
-                </div>
 
                 {/* Language Switcher */}
                 <DropdownMenu>
@@ -213,14 +209,6 @@ export const EnterpriseNavbar = () => {
                   </Link>
                 )}
 
-                {/* CTA Button (Desktop) */}
-                {cta?.is_visible && (
-                  <Link to={cta.url} className="hidden lg:block">
-                    <Button className="btn-gold">
-                      {getLabel(cta)}
-                    </Button>
-                  </Link>
-                )}
 
                 {/* Mobile Menu Button */}
                 <Button
