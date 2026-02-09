@@ -1,13 +1,13 @@
 /**
  * Properties Listing Page
- * Production-grade with infinite scroll, URL-synced filters, and API integration
+ * Production-grade with infinite scroll, URL-synced filters, and Supabase integration
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Grid, List, Map, Loader2, SlidersHorizontal, X, RefreshCw, Search } from 'lucide-react';
+import { Grid, List, Loader2, SlidersHorizontal, X, RefreshCw, Search } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import PropertyCard from '@/components/property/PropertyCard';
 import { Button } from '@/components/ui/button';
@@ -35,93 +35,107 @@ import {
 } from '@/components/ui/accordion';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
-import { Check } from 'lucide-react';
-import { mockPropertiesApi } from '@/lib/api';
-import { PropertyListItem, PropertyFilters, FinishingType } from '@/lib/api/types';
+import { supabase } from '@/integrations/supabase/client';
 import CompareBar from '@/components/compare/CompareBar';
 
 const ITEMS_PER_PAGE = 12;
 
-const CITIES = ['Cairo', 'New Cairo', 'Giza', 'Alexandria', 'North Coast', 'Ain Sokhna', 'Sheikh Zayed', '6th of October'];
-const FINISHING_OPTIONS: { value: FinishingType; label: string }[] = [
-  { value: 'core_shell', label: 'Core & Shell' },
-  { value: 'semi_finished', label: 'Semi Finished' },
-  { value: 'fully_finished', label: 'Fully Finished' },
-  { value: 'furnished', label: 'Furnished' },
+const LOCATIONS = ['New Cairo', 'North Coast', 'Sheikh Zayed', '6th of October', 'Ain Sokhna', 'Giza', 'Alexandria'];
+
+const DELIVERY_STATUSES = [
+  { value: 'off_plan', label: 'Off Plan' },
+  { value: 'ready_to_deliver', label: 'Ready to Deliver' },
+  { value: 'ready_to_live', label: 'Ready to Live' },
 ];
-const PROPERTY_TAGS = ['Hot Deal', 'New Launch', 'Ready to Move', 'Installments', 'Prime Location', 'Sea View', 'Garden View', 'Pool View'];
+
+interface Filters {
+  search?: string;
+  location?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  minArea?: number;
+  maxArea?: number;
+  deliveryStatus?: string;
+  sortBy?: 'price_asc' | 'price_desc' | 'newest' | 'area_asc' | 'area_desc';
+}
+
+interface DBProperty {
+  id: string;
+  title: string;
+  location: string | null;
+  price: number | null;
+  beds: number | null;
+  baths: number | null;
+  area: number | null;
+  image_url: string | null;
+  status: string;
+  progress_status: string | null;
+  created_at: string;
+}
 
 const Properties = () => {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
-  
-  // View mode state
-  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'map'>('grid');
+
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-  
-  // Data states
-  const [properties, setProperties] = useState<PropertyListItem[]>([]);
+
+  const [properties, setProperties] = useState<DBProperty[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasNextPage, setHasNextPage] = useState(true);
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  
-  // Infinite scroll sentinel
+
   const sentinelRef = useRef<HTMLDivElement>(null);
   const loadingRef = useRef(false);
-  
+
   // Parse filters from URL
-  const getFiltersFromURL = useCallback((): PropertyFilters => {
+  const getFiltersFromURL = useCallback((): Filters => {
     return {
       search: searchParams.get('search') || undefined,
-      city: searchParams.get('city') || undefined,
-      area: searchParams.get('area') || undefined,
+      location: searchParams.get('location') || undefined,
       minPrice: searchParams.get('minPrice') ? Number(searchParams.get('minPrice')) : undefined,
       maxPrice: searchParams.get('maxPrice') ? Number(searchParams.get('maxPrice')) : undefined,
       bedrooms: searchParams.get('bedrooms') ? Number(searchParams.get('bedrooms')) : undefined,
       bathrooms: searchParams.get('bathrooms') ? Number(searchParams.get('bathrooms')) : undefined,
       minArea: searchParams.get('minArea') ? Number(searchParams.get('minArea')) : undefined,
       maxArea: searchParams.get('maxArea') ? Number(searchParams.get('maxArea')) : undefined,
-      finishing: searchParams.get('finishing') as PropertyFilters['finishing'] || undefined,
-      tags: searchParams.get('tags')?.split(',').filter(Boolean) || undefined,
-      sortBy: (searchParams.get('sortBy') as PropertyFilters['sortBy']) || 'newest',
+      deliveryStatus: searchParams.get('deliveryStatus') || undefined,
+      sortBy: (searchParams.get('sortBy') as Filters['sortBy']) || 'newest',
     };
   }, [searchParams]);
 
-  const [filters, setFilters] = useState<PropertyFilters>(getFiltersFromURL);
+  const [filters, setFilters] = useState<Filters>(getFiltersFromURL);
   const [searchInput, setSearchInput] = useState(filters.search || '');
-  
-  // Local filter state for sliders
+
   const [localPriceRange, setLocalPriceRange] = useState<[number, number]>([filters.minPrice || 0, filters.maxPrice || 20000000]);
   const [localAreaRange, setLocalAreaRange] = useState<[number, number]>([filters.minArea || 0, filters.maxArea || 500]);
 
   // Sync filters to URL
-  const syncFiltersToURL = useCallback((newFilters: PropertyFilters) => {
+  const syncFiltersToURL = useCallback((newFilters: Filters) => {
     const params = new URLSearchParams();
-    
     if (newFilters.search) params.set('search', newFilters.search);
-    if (newFilters.city) params.set('city', newFilters.city);
-    if (newFilters.area) params.set('area', newFilters.area);
+    if (newFilters.location) params.set('location', newFilters.location);
     if (newFilters.minPrice) params.set('minPrice', String(newFilters.minPrice));
     if (newFilters.maxPrice) params.set('maxPrice', String(newFilters.maxPrice));
     if (newFilters.bedrooms) params.set('bedrooms', String(newFilters.bedrooms));
     if (newFilters.bathrooms) params.set('bathrooms', String(newFilters.bathrooms));
     if (newFilters.minArea) params.set('minArea', String(newFilters.minArea));
     if (newFilters.maxArea) params.set('maxArea', String(newFilters.maxArea));
-    if (newFilters.finishing) params.set('finishing', newFilters.finishing);
-    if (newFilters.tags?.length) params.set('tags', newFilters.tags.join(','));
+    if (newFilters.deliveryStatus) params.set('deliveryStatus', newFilters.deliveryStatus);
     if (newFilters.sortBy && newFilters.sortBy !== 'newest') params.set('sortBy', newFilters.sortBy);
-    
     setSearchParams(params, { replace: true });
   }, [setSearchParams]);
 
-  // Fetch properties from API
-  const fetchProperties = useCallback(async (pageNum: number, currentFilters: PropertyFilters, append = false) => {
+  // Build and execute Supabase query
+  const fetchProperties = useCallback(async (pageNum: number, currentFilters: Filters, append = false) => {
     if (loadingRef.current) return;
     loadingRef.current = true;
-    
+
     if (append) {
       setLoadingMore(true);
     } else {
@@ -130,26 +144,81 @@ const Properties = () => {
     }
 
     try {
-      // Use the correct method name from mock handlers
-      const response = await mockPropertiesApi.list({
-        ...currentFilters,
-        page: pageNum,
-        limit: ITEMS_PER_PAGE,
-      });
+      let query = supabase
+        .from('properties')
+        .select('id, title, location, price, beds, baths, area, image_url, status, progress_status, created_at', { count: 'exact' });
+
+      // Apply filters
+      if (currentFilters.search) {
+        query = query.or(`title.ilike.%${currentFilters.search}%,location.ilike.%${currentFilters.search}%`);
+      }
+      if (currentFilters.location) {
+        query = query.ilike('location', `%${currentFilters.location}%`);
+      }
+      if (currentFilters.minPrice) {
+        query = query.gte('price', currentFilters.minPrice);
+      }
+      if (currentFilters.maxPrice) {
+        query = query.lte('price', currentFilters.maxPrice);
+      }
+      if (currentFilters.bedrooms) {
+        query = query.gte('beds', currentFilters.bedrooms);
+      }
+      if (currentFilters.bathrooms) {
+        query = query.gte('baths', currentFilters.bathrooms);
+      }
+      if (currentFilters.minArea) {
+        query = query.gte('area', currentFilters.minArea);
+      }
+      if (currentFilters.maxArea) {
+        query = query.lte('area', currentFilters.maxArea);
+      }
+      if (currentFilters.deliveryStatus) {
+        query = query.eq('progress_status', currentFilters.deliveryStatus);
+      }
+
+      // Sorting
+      switch (currentFilters.sortBy) {
+        case 'price_asc':
+          query = query.order('price', { ascending: true, nullsFirst: false });
+          break;
+        case 'price_desc':
+          query = query.order('price', { ascending: false, nullsFirst: false });
+          break;
+        case 'area_asc':
+          query = query.order('area', { ascending: true, nullsFirst: false });
+          break;
+        case 'area_desc':
+          query = query.order('area', { ascending: false, nullsFirst: false });
+          break;
+        default:
+          query = query.order('created_at', { ascending: false });
+      }
+
+      // Pagination
+      const from = (pageNum - 1) * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
+      query = query.range(from, to);
+
+      const { data, error: queryError, count } = await query;
+
+      if (queryError) throw queryError;
+
+      const total = count || 0;
+      const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
 
       if (append) {
         setProperties(prev => {
-          // Prevent duplicates
           const existingIds = new Set(prev.map(p => p.id));
-          const newProperties = response.data.filter(p => !existingIds.has(p.id));
+          const newProperties = (data || []).filter(p => !existingIds.has(p.id));
           return [...prev, ...newProperties];
         });
       } else {
-        setProperties(response.data);
+        setProperties(data || []);
       }
 
-      setTotalCount(response.total);
-      setHasNextPage(pageNum < response.totalPages);
+      setTotalCount(total);
+      setHasNextPage(pageNum < totalPages);
       setPage(pageNum);
     } catch (err) {
       console.error('Failed to fetch properties:', err);
@@ -172,10 +241,9 @@ const Properties = () => {
     fetchProperties(1, urlFilters, false);
   }, [searchParams, fetchProperties, getFiltersFromURL]);
 
-  // Infinite scroll with IntersectionObserver
+  // Infinite scroll
   useEffect(() => {
     if (!sentinelRef.current || loading) return;
-
     const observer = new IntersectionObserver(
       (entries) => {
         const [entry] = entries;
@@ -183,36 +251,27 @@ const Properties = () => {
           fetchProperties(page + 1, filters, true);
         }
       },
-      {
-        root: null,
-        rootMargin: '200px',
-        threshold: 0.1,
-      }
+      { root: null, rootMargin: '200px', threshold: 0.1 }
     );
-
     observer.observe(sentinelRef.current);
     return () => observer.disconnect();
   }, [hasNextPage, loadingMore, page, filters, fetchProperties, loading]);
 
-  // Handle filter changes
-  const handleFilterChange = useCallback((newFilters: Partial<PropertyFilters>) => {
+  const handleFilterChange = useCallback((newFilters: Partial<Filters>) => {
     const updatedFilters = { ...filters, ...newFilters };
     setFilters(updatedFilters);
     syncFiltersToURL(updatedFilters);
   }, [filters, syncFiltersToURL]);
 
-  // Handle search submit
   const handleSearchSubmit = useCallback((e?: React.FormEvent) => {
     e?.preventDefault();
     handleFilterChange({ search: searchInput || undefined });
   }, [searchInput, handleFilterChange]);
 
-  // Handle sort change
   const handleSortChange = useCallback((sortBy: string) => {
-    handleFilterChange({ sortBy: sortBy as PropertyFilters['sortBy'] });
+    handleFilterChange({ sortBy: sortBy as Filters['sortBy'] });
   }, [handleFilterChange]);
 
-  // Clear all filters
   const clearFilters = useCallback(() => {
     setFilters({});
     setSearchInput('');
@@ -221,25 +280,23 @@ const Properties = () => {
     setSearchParams({}, { replace: true });
   }, [setSearchParams]);
 
-  // Get active filter count
   const getActiveFilterCount = () => {
     let count = 0;
     if (filters.search) count++;
-    if (filters.city) count++;
-    if (filters.area) count++;
+    if (filters.location) count++;
     if (filters.minPrice || filters.maxPrice) count++;
     if (filters.bedrooms) count++;
     if (filters.bathrooms) count++;
     if (filters.minArea || filters.maxArea) count++;
-    if (filters.finishing) count++;
-    if (filters.tags?.length) count++;
+    if (filters.deliveryStatus) count++;
     return count;
   };
 
   const activeFilterCount = getActiveFilterCount();
 
-  // Map database status to UI status
-  const mapStatus = (status: string): 'available' | 'reserved' | 'sold' => {
+  const mapStatus = (status: string): 'available' | 'reserved' | 'sold' | 'under_construction' | 'delivered' => {
+    if (status === 'delivered' || status === 'ready_to_live') return 'delivered';
+    if (status === 'under_construction' || status === 'off_plan') return 'under_construction';
     if (status === 'published' || status === 'available') return 'available';
     if (status === 'reserved' || status === 'pending') return 'reserved';
     if (status === 'sold' || status === 'archived') return 'sold';
@@ -250,14 +307,6 @@ const Properties = () => {
     if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
     if (value >= 1000) return `${(value / 1000).toFixed(0)}K`;
     return value.toString();
-  };
-
-  const handleTagToggle = (tag: string) => {
-    const currentTags = filters.tags || [];
-    const newTags = currentTags.includes(tag)
-      ? currentTags.filter(t => t !== tag)
-      : [...currentTags, tag];
-    handleFilterChange({ tags: newTags.length > 0 ? newTags : undefined });
   };
 
   return (
@@ -301,8 +350,7 @@ const Properties = () => {
                   className="input-luxury pl-12 h-12"
                 />
               </div>
-              
-              {/* Mobile Filters Button */}
+
               <Button
                 type="button"
                 variant="outline"
@@ -316,7 +364,7 @@ const Properties = () => {
                   </span>
                 )}
               </Button>
-              
+
               <Button type="submit" className="btn-gold h-12 px-8">
                 {t('common.search')}
               </Button>
@@ -329,32 +377,31 @@ const Properties = () => {
               <p className="text-muted-foreground">
                 <span className="text-foreground font-medium">{totalCount}</span> {t('search.results')}
               </p>
-              
-              {/* Active Filter Badges */}
+
               {activeFilterCount > 0 && (
                 <div className="flex items-center gap-2 flex-wrap">
                   {filters.search && (
                     <Badge variant="secondary" className="gap-1">
                       "{filters.search}"
-                      <button onClick={() => handleFilterChange({ search: undefined })}>
-                        <X className="w-3 h-3" />
-                      </button>
+                      <button onClick={() => handleFilterChange({ search: undefined })}><X className="w-3 h-3" /></button>
                     </Badge>
                   )}
-                  {filters.city && (
+                  {filters.location && (
                     <Badge variant="secondary" className="gap-1">
-                      {filters.city}
-                      <button onClick={() => handleFilterChange({ city: undefined })}>
-                        <X className="w-3 h-3" />
-                      </button>
+                      {filters.location}
+                      <button onClick={() => handleFilterChange({ location: undefined })}><X className="w-3 h-3" /></button>
                     </Badge>
                   )}
                   {filters.bedrooms && (
                     <Badge variant="secondary" className="gap-1">
-                      {filters.bedrooms} beds
-                      <button onClick={() => handleFilterChange({ bedrooms: undefined })}>
-                        <X className="w-3 h-3" />
-                      </button>
+                      {filters.bedrooms}+ beds
+                      <button onClick={() => handleFilterChange({ bedrooms: undefined })}><X className="w-3 h-3" /></button>
+                    </Badge>
+                  )}
+                  {filters.deliveryStatus && (
+                    <Badge variant="secondary" className="gap-1">
+                      {DELIVERY_STATUSES.find(d => d.value === filters.deliveryStatus)?.label}
+                      <button onClick={() => handleFilterChange({ deliveryStatus: undefined })}><X className="w-3 h-3" /></button>
                     </Badge>
                   )}
                   {activeFilterCount > 2 && (
@@ -372,7 +419,6 @@ const Properties = () => {
             </div>
 
             <div className="flex items-center gap-3 w-full sm:w-auto">
-              {/* Sort */}
               <Select value={filters.sortBy || 'newest'} onValueChange={handleSortChange}>
                 <SelectTrigger className="w-full sm:w-[180px] input-luxury">
                   <SelectValue placeholder={t('search.sortBy')} />
@@ -386,7 +432,6 @@ const Properties = () => {
                 </SelectContent>
               </Select>
 
-              {/* View Toggle */}
               <div className="hidden md:flex items-center gap-1 bg-secondary/50 rounded-lg p-1">
                 <Button
                   variant="ghost"
@@ -406,18 +451,8 @@ const Properties = () => {
                 >
                   <List className="w-4 h-4" />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={viewMode === 'map' ? 'bg-background' : ''}
-                  onClick={() => setViewMode('map')}
-                  aria-label="Map view"
-                >
-                  <Map className="w-4 h-4" />
-                </Button>
               </div>
-              
-              {/* Desktop Filters Button */}
+
               <Button
                 variant="outline"
                 onClick={() => setIsFiltersOpen(true)}
@@ -468,7 +503,6 @@ const Properties = () => {
               ))}
             </div>
           ) : properties.length === 0 && !error ? (
-            /* Empty State */
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -492,14 +526,11 @@ const Properties = () => {
             </motion.div>
           ) : (
             <>
-              {/* Properties Grid/List */}
               <div
                 className={
                   viewMode === 'grid'
                     ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
-                    : viewMode === 'list'
-                    ? 'space-y-4'
-                    : 'grid grid-cols-1 lg:grid-cols-2 gap-6'
+                    : 'space-y-4'
                 }
               >
                 <AnimatePresence mode="popLayout">
@@ -517,19 +548,17 @@ const Properties = () => {
                         title={property.title}
                         location={property.location || 'Location not specified'}
                         price={property.price || 0}
-                        beds={property.bedrooms || 0}
-                        baths={property.bathrooms || 0}
+                        beds={property.beds || 0}
+                        baths={property.baths || 0}
                         area={property.area || 0}
-                        image={property.imageUrl || '/placeholder.svg'}
+                        image={property.image_url || '/placeholder.svg'}
                         status={mapStatus(property.status)}
-                        salePrice={property.salePrice}
                       />
                     </motion.div>
                   ))}
                 </AnimatePresence>
               </div>
 
-              {/* Infinite Scroll Sentinel */}
               <div ref={sentinelRef} className="py-8">
                 {loadingMore && (
                   <div className="flex items-center justify-center gap-3 text-muted-foreground">
@@ -537,7 +566,6 @@ const Properties = () => {
                     <span>Loading more properties...</span>
                   </div>
                 )}
-                
                 {!hasNextPage && properties.length > 0 && (
                   <motion.p
                     initial={{ opacity: 0 }}
@@ -555,8 +583,8 @@ const Properties = () => {
 
       {/* Filters Drawer */}
       <Sheet open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
-        <SheetContent 
-          side="right" 
+        <SheetContent
+          side="right"
           className="w-full sm:max-w-md glass-card border-border/30 p-0 flex flex-col"
         >
           <SheetHeader className="p-6 border-b border-border/30">
@@ -578,32 +606,27 @@ const Properties = () => {
           </SheetHeader>
 
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            <Accordion type="multiple" defaultValue={['location', 'price', 'rooms']} className="space-y-4">
+            <Accordion type="multiple" defaultValue={['location', 'price', 'rooms', 'delivery']} className="space-y-4">
               {/* Location */}
               <AccordionItem value="location" className="border-b border-border/30">
                 <AccordionTrigger className="text-foreground font-medium hover:no-underline py-4">
                   Location
                 </AccordionTrigger>
                 <AccordionContent className="pb-4">
-                  <div className="space-y-4">
-                    <div>
-                      <Label className="text-sm text-muted-foreground mb-2 block">City</Label>
-                      <div className="flex flex-wrap gap-2">
-                        {CITIES.map((city) => (
-                          <button
-                            key={city}
-                            onClick={() => handleFilterChange({ city: filters.city === city ? undefined : city })}
-                            className={`px-3 py-1.5 rounded-lg text-sm transition-all ${
-                              filters.city === city
-                                ? 'bg-primary text-primary-foreground'
-                                : 'bg-secondary/50 text-foreground hover:bg-secondary'
-                            }`}
-                          >
-                            {city}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                  <div className="flex flex-wrap gap-2">
+                    {LOCATIONS.map((loc) => (
+                      <button
+                        key={loc}
+                        onClick={() => handleFilterChange({ location: filters.location === loc ? undefined : loc })}
+                        className={`px-3 py-1.5 rounded-lg text-sm transition-all ${
+                          filters.location === loc
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-secondary/50 text-foreground hover:bg-secondary'
+                        }`}
+                      >
+                        {loc}
+                      </button>
+                    ))}
                   </div>
                 </AccordionContent>
               </AccordionItem>
@@ -616,12 +639,8 @@ const Properties = () => {
                 <AccordionContent className="pb-4">
                   <div className="space-y-4">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">
-                        {formatPrice(localPriceRange[0])} EGP
-                      </span>
-                      <span className="text-muted-foreground">
-                        {formatPrice(localPriceRange[1])} EGP
-                      </span>
+                      <span className="text-muted-foreground">{formatPrice(localPriceRange[0])} EGP</span>
+                      <span className="text-muted-foreground">{formatPrice(localPriceRange[1])} EGP</span>
                     </div>
                     <Slider
                       value={localPriceRange}
@@ -721,70 +740,40 @@ const Properties = () => {
                 </AccordionContent>
               </AccordionItem>
 
-              {/* Finishing */}
-              <AccordionItem value="finishing" className="border-b border-border/30">
+              {/* Delivery Status */}
+              <AccordionItem value="delivery" className="border-b border-border/30">
                 <AccordionTrigger className="text-foreground font-medium hover:no-underline py-4">
-                  Finishing
+                  Delivery Status
                 </AccordionTrigger>
                 <AccordionContent className="pb-4">
-                  <div className="grid grid-cols-2 gap-2">
-                    {FINISHING_OPTIONS.map((option) => (
+                  <div className="flex flex-wrap gap-2">
+                    {DELIVERY_STATUSES.map((ds) => (
                       <button
-                        key={option.value}
-                        onClick={() => handleFilterChange({ finishing: filters.finishing === option.value ? undefined : option.value })}
-                        className={`px-3 py-2 rounded-lg text-sm transition-all text-left ${
-                          filters.finishing === option.value
+                        key={ds.value}
+                        onClick={() => handleFilterChange({ deliveryStatus: filters.deliveryStatus === ds.value ? undefined : ds.value })}
+                        className={`px-3 py-1.5 rounded-lg text-sm transition-all ${
+                          filters.deliveryStatus === ds.value
                             ? 'bg-primary text-primary-foreground'
                             : 'bg-secondary/50 text-foreground hover:bg-secondary'
                         }`}
                       >
-                        {option.label}
+                        {ds.label}
                       </button>
                     ))}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-
-              {/* Tags */}
-              <AccordionItem value="tags" className="border-b border-border/30">
-                <AccordionTrigger className="text-foreground font-medium hover:no-underline py-4">
-                  Property Tags
-                </AccordionTrigger>
-                <AccordionContent className="pb-4">
-                  <div className="flex flex-wrap gap-2">
-                    {PROPERTY_TAGS.map((tag) => {
-                      const isSelected = filters.tags?.includes(tag);
-                      return (
-                        <button
-                          key={tag}
-                          onClick={() => handleTagToggle(tag)}
-                          className={`px-3 py-1.5 rounded-lg text-sm transition-all flex items-center gap-1.5 ${
-                            isSelected
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-secondary/50 text-foreground hover:bg-secondary'
-                          }`}
-                        >
-                          {isSelected && <Check className="w-3 h-3" />}
-                          {tag}
-                        </button>
-                      );
-                    })}
                   </div>
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
           </div>
 
-          {/* Footer */}
           <div className="p-6 border-t border-border/30 bg-background/50">
             <Button onClick={() => setIsFiltersOpen(false)} className="w-full btn-gold h-12">
-              Show Results
+              Show {totalCount} Results
             </Button>
           </div>
         </SheetContent>
       </Sheet>
 
-      {/* Compare Bar */}
       <CompareBar />
     </Layout>
   );
