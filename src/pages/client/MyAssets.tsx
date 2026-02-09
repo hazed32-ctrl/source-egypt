@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Building2, MapPin, Loader2, AlertCircle } from 'lucide-react';
+import { Building2, MapPin, Loader2, AlertCircle, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import PortalLayout from '@/components/portal/PortalLayout';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +29,7 @@ const MyAssets = () => {
   const [properties, setProperties] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -71,6 +73,16 @@ const MyAssets = () => {
     }
   };
 
+  const filteredProperties = useMemo(() => {
+    if (!searchQuery.trim()) return properties;
+    const q = searchQuery.toLowerCase();
+    return properties.filter(
+      (p) =>
+        p.title.toLowerCase().includes(q) ||
+        (p.location && p.location.toLowerCase().includes(q))
+    );
+  }, [properties, searchQuery]);
+
   if (isLoading) {
     return (
       <PortalLayout title="My Assets" subtitle="View your property portfolio">
@@ -90,7 +102,19 @@ const MyAssets = () => {
         </div>
       )}
 
-      {properties.length === 0 ? (
+      {properties.length > 0 && (
+        <div className="relative mb-6">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by name or location..."
+            className="input-luxury pl-12"
+          />
+        </div>
+      )}
+
+      {filteredProperties.length === 0 ? (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -101,13 +125,14 @@ const MyAssets = () => {
             No Properties Yet
           </h3>
           <p className="text-muted-foreground max-w-md mx-auto">
-            You don't have any properties assigned to your account yet.
-            Contact your administrator to get started.
+            {searchQuery
+              ? 'No properties match your search. Try a different term.'
+              : "You don't have any properties assigned to your account yet. Contact your administrator to get started."}
           </p>
         </motion.div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {properties.map((property, index) => (
+          {filteredProperties.map((property, index) => (
             <motion.div
               key={property.id}
               initial={{ opacity: 0, y: 20 }}
