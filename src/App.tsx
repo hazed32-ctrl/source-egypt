@@ -136,7 +136,7 @@ const AppContent = () => {
         <Route
           path="/agent/dashboard"
           element={
-            <ProtectedRoute requiredRole="agent">
+            <ProtectedRoute requiredRole="sales_agent">
               <Suspense fallback={null}>
                 <AgentDashboard />
               </Suspense>
@@ -146,7 +146,7 @@ const AppContent = () => {
         <Route
           path="/agent/properties"
           element={
-            <ProtectedRoute requiredRole="agent">
+            <ProtectedRoute requiredRole="sales_agent">
               <Suspense fallback={null}>
                 <AgentProperties />
               </Suspense>
@@ -158,7 +158,7 @@ const AppContent = () => {
         <Route
           path="/admin/dashboard"
           element={
-            <ProtectedRoute requiredRole={['admin', 'super_admin']}>
+            <ProtectedRoute requiredRole="admin">
               <Suspense fallback={null}>
                 <AdminDashboard />
               </Suspense>
@@ -168,7 +168,7 @@ const AppContent = () => {
         <Route
           path="/admin/users"
           element={
-            <ProtectedRoute requiredRole={['admin', 'super_admin']}>
+            <ProtectedRoute requiredRole="admin">
               <Suspense fallback={null}>
                 <ManageUsers />
               </Suspense>
@@ -178,7 +178,7 @@ const AppContent = () => {
         <Route
           path="/admin/users/:id/edit"
           element={
-            <ProtectedRoute requiredRole={['admin', 'super_admin']}>
+            <ProtectedRoute requiredRole="admin">
               <Suspense fallback={null}>
                 <EditUser />
               </Suspense>
@@ -188,7 +188,7 @@ const AppContent = () => {
         <Route
           path="/admin/properties"
           element={
-            <ProtectedRoute requiredRole={['admin', 'super_admin']}>
+            <ProtectedRoute requiredRole="admin">
               <Suspense fallback={null}>
                 <ManageProperties />
               </Suspense>
@@ -198,7 +198,7 @@ const AppContent = () => {
         <Route
           path="/admin/inventory"
           element={
-            <ProtectedRoute requiredRole={['admin', 'super_admin']}>
+            <ProtectedRoute requiredRole="admin">
               <Suspense fallback={null}>
                 <ManageInventory />
               </Suspense>
@@ -208,7 +208,7 @@ const AppContent = () => {
         <Route
           path="/admin/documents"
           element={
-            <ProtectedRoute requiredRole={['admin', 'super_admin']}>
+            <ProtectedRoute requiredRole="admin">
               <Suspense fallback={null}>
                 <ManageDocuments />
               </Suspense>
@@ -218,7 +218,7 @@ const AppContent = () => {
         <Route
           path="/admin/leads"
           element={
-            <ProtectedRoute requiredRole={['admin', 'super_admin', 'sales_agent']}>
+            <ProtectedRoute requiredRole={['admin', 'sales_agent']}>
               <Suspense fallback={null}>
                 <ManageLeads />
               </Suspense>
@@ -228,7 +228,7 @@ const AppContent = () => {
         <Route
           path="/admin/resale"
           element={
-            <ProtectedRoute requiredRole={['admin', 'super_admin']}>
+            <ProtectedRoute requiredRole="admin">
               <Suspense fallback={null}>
                 <ManageResaleRequests />
               </Suspense>
@@ -238,7 +238,7 @@ const AppContent = () => {
         <Route
           path="/admin/cms"
           element={
-            <ProtectedRoute requiredRole={['admin', 'super_admin']}>
+            <ProtectedRoute requiredRole="admin">
               <Suspense fallback={null}>
                 <ManageCMS />
               </Suspense>
@@ -248,7 +248,7 @@ const AppContent = () => {
         <Route
           path="/admin/settings"
           element={
-            <ProtectedRoute requiredRole={['admin', 'super_admin']}>
+            <ProtectedRoute requiredRole="admin">
               <Suspense fallback={null}>
                 <AdminSettings />
               </Suspense>
@@ -258,7 +258,7 @@ const AppContent = () => {
         <Route
           path="/admin/recommendations"
           element={
-            <ProtectedRoute requiredRole={['admin', 'super_admin']}>
+            <ProtectedRoute requiredRole="admin">
               <Suspense fallback={null}>
                 <ManageRecommendations />
               </Suspense>
