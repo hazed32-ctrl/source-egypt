@@ -167,15 +167,7 @@ const Index = () => {
               transition={{ duration: 0.8 }}
             >
               <h1 className="font-display text-5xl md:text-7xl font-semibold text-foreground mb-6 leading-tight">
-                {t('hero.title').split(' ').map((word, i) => (
-                  <span key={i}>
-                    {i === 1 ? (
-                      <span className="text-gold-gradient">{word}</span>
-                    ) : (
-                      word
-                    )}{' '}
-                  </span>
-                ))}
+                Make It <span className="text-gold-gradient">Yours</span>
               </h1>
               <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
                 {t('hero.subtitle')}
