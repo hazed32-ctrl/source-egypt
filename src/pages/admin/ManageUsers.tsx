@@ -159,9 +159,11 @@ const ManageUsers = () => {
 
     setIsSubmitting(true);
     try {
+      // Delete existing role(s) then insert new one
+      await supabase.from('user_roles').delete().eq('user_id', selectedUser.user_id);
       const { error } = await supabase
         .from('user_roles')
-        .upsert({ user_id: selectedUser.user_id, role: editRole }, { onConflict: 'user_id' });
+        .insert({ user_id: selectedUser.user_id, role: editRole });
 
       if (error) throw error;
 
