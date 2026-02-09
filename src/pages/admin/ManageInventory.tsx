@@ -1,6 +1,6 @@
 /**
  * Admin - Manage Inventory
- * CRUD for inventory records (admin-only)
+ * CRUD for inventory records (admin-only) — reads from real Supabase inventory table
  */
 
 import { useState, useEffect } from 'react';
@@ -20,14 +20,28 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { Inventory, mockInventoryApi } from '@/lib/api';
+import { supabase } from '@/integrations/supabase/client';
+
+interface InventoryRow {
+  id: string;
+  property_id: string;
+  total_units: number;
+  available_units: number;
+  reserved_units: number;
+  sold_units: number;
+  sync_source: string | null;
+  last_synced_at: string | null;
+  created_at: string;
+  updated_at: string;
+  propertyTitle?: string;
+}
 
 const ManageInventory = () => {
   const { toast } = useToast();
-  const [inventory, setInventory] = useState<Inventory[]>([]);
+  const [inventory, setInventory] = useState<InventoryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editData, setEditData] = useState<Partial<Inventory>>({});
+  const [editData, setEditData] = useState<Partial<InventoryRow>>({});
 
   useEffect(() => {
     fetchInventory();
@@ -36,9 +50,35 @@ const ManageInventory = () => {
   const fetchInventory = async () => {
     setLoading(true);
     try {
-      const data = await mockInventoryApi.list();
-      setInventory(data);
+      // Fetch inventory and join with properties for title
+      const { data: invData, error: invErr } = await supabase
+        .from('inventory')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (invErr) throw invErr;
+
+      // Fetch property titles
+      const propertyIds = (invData || []).map((i) => i.property_id);
+      let propertyMap = new Map<string, string>();
+
+      if (propertyIds.length > 0) {
+        const { data: props } = await supabase
+          .from('properties')
+          .select('id, title')
+          .in('id', propertyIds);
+
+        (props || []).forEach((p) => propertyMap.set(p.id, p.title));
+      }
+
+      setInventory(
+        (invData || []).map((row) => ({
+          ...row,
+          propertyTitle: propertyMap.get(row.property_id) || 'Unknown Property',
+        }))
+      );
     } catch (error) {
+      console.error('Error fetching inventory:', error);
       toast({
         title: 'Error',
         description: 'Failed to fetch inventory',
@@ -49,12 +89,12 @@ const ManageInventory = () => {
     }
   };
 
-  const startEdit = (item: Inventory) => {
+  const startEdit = (item: InventoryRow) => {
     setEditingId(item.id);
     setEditData({
-      availableUnits: item.availableUnits,
-      reservedUnits: item.reservedUnits,
-      soldUnits: item.soldUnits,
+      available_units: item.available_units,
+      reserved_units: item.reserved_units,
+      sold_units: item.sold_units,
     });
   };
 
@@ -65,8 +105,29 @@ const ManageInventory = () => {
 
   const saveEdit = async (id: string) => {
     try {
-      const updated = await mockInventoryApi.update(id, editData);
-      setInventory(inventory.map((i) => (i.id === id ? updated : i)));
+      const { error } = await supabase
+        .from('inventory')
+        .update({
+          available_units: editData.available_units,
+          reserved_units: editData.reserved_units,
+          sold_units: editData.sold_units,
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setInventory(
+        inventory.map((i) =>
+          i.id === id
+            ? {
+                ...i,
+                available_units: editData.available_units ?? i.available_units,
+                reserved_units: editData.reserved_units ?? i.reserved_units,
+                sold_units: editData.sold_units ?? i.sold_units,
+              }
+            : i
+        )
+      );
       setEditingId(null);
       setEditData({});
       toast({
@@ -74,6 +135,7 @@ const ManageInventory = () => {
         description: 'Inventory updated successfully',
       });
     } catch (error) {
+      console.error('Error updating inventory:', error);
       toast({
         title: 'Error',
         description: 'Failed to update inventory',
@@ -82,8 +144,9 @@ const ManageInventory = () => {
     }
   };
 
-  const getOccupancyRate = (item: Inventory) => {
-    return Math.round(((item.soldUnits + item.reservedUnits) / item.totalUnits) * 100);
+  const getOccupancyRate = (item: InventoryRow) => {
+    if (item.total_units === 0) return 0;
+    return Math.round(((item.sold_units + item.reserved_units) / item.total_units) * 100);
   };
 
   return (
@@ -115,7 +178,7 @@ const ManageInventory = () => {
                 </div>
                 <div>
                   <p className="text-2xl font-semibold text-foreground">
-                    {inventory.reduce((sum, i) => sum + i.totalUnits, 0)}
+                    {inventory.reduce((sum, i) => sum + i.total_units, 0)}
                   </p>
                   <p className="text-sm text-muted-foreground">Total Units</p>
                 </div>
@@ -131,7 +194,7 @@ const ManageInventory = () => {
                 </div>
                 <div>
                   <p className="text-2xl font-semibold text-foreground">
-                    {inventory.reduce((sum, i) => sum + i.availableUnits, 0)}
+                    {inventory.reduce((sum, i) => sum + i.available_units, 0)}
                   </p>
                   <p className="text-sm text-muted-foreground">Available</p>
                 </div>
@@ -147,7 +210,7 @@ const ManageInventory = () => {
                 </div>
                 <div>
                   <p className="text-2xl font-semibold text-foreground">
-                    {inventory.reduce((sum, i) => sum + i.reservedUnits, 0)}
+                    {inventory.reduce((sum, i) => sum + i.reserved_units, 0)}
                   </p>
                   <p className="text-sm text-muted-foreground">Reserved</p>
                 </div>
@@ -163,7 +226,7 @@ const ManageInventory = () => {
                 </div>
                 <div>
                   <p className="text-2xl font-semibold text-foreground">
-                    {inventory.reduce((sum, i) => sum + i.soldUnits, 0)}
+                    {inventory.reduce((sum, i) => sum + i.sold_units, 0)}
                   </p>
                   <p className="text-sm text-muted-foreground">Sold</p>
                 </div>
@@ -183,6 +246,10 @@ const ManageInventory = () => {
           <CardContent>
             {loading ? (
               <div className="text-center py-8 text-muted-foreground">Loading...</div>
+            ) : inventory.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No inventory records found. Add inventory records via the database.
+              </div>
             ) : (
               <Table>
                 <TableHeader>
@@ -201,47 +268,47 @@ const ManageInventory = () => {
                   {inventory.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell className="font-medium">{item.propertyTitle}</TableCell>
-                      <TableCell className="text-center">{item.totalUnits}</TableCell>
+                      <TableCell className="text-center">{item.total_units}</TableCell>
                       <TableCell className="text-center">
                         {editingId === item.id ? (
                           <Input
                             type="number"
-                            value={editData.availableUnits}
+                            value={editData.available_units}
                             onChange={(e) =>
-                              setEditData({ ...editData, availableUnits: parseInt(e.target.value) })
+                              setEditData({ ...editData, available_units: parseInt(e.target.value) })
                             }
                             className="w-20 text-center"
                           />
                         ) : (
-                          item.availableUnits
+                          item.available_units
                         )}
                       </TableCell>
                       <TableCell className="text-center">
                         {editingId === item.id ? (
                           <Input
                             type="number"
-                            value={editData.reservedUnits}
+                            value={editData.reserved_units}
                             onChange={(e) =>
-                              setEditData({ ...editData, reservedUnits: parseInt(e.target.value) })
+                              setEditData({ ...editData, reserved_units: parseInt(e.target.value) })
                             }
                             className="w-20 text-center"
                           />
                         ) : (
-                          item.reservedUnits
+                          item.reserved_units
                         )}
                       </TableCell>
                       <TableCell className="text-center">
                         {editingId === item.id ? (
                           <Input
                             type="number"
-                            value={editData.soldUnits}
+                            value={editData.sold_units}
                             onChange={(e) =>
-                              setEditData({ ...editData, soldUnits: parseInt(e.target.value) })
+                              setEditData({ ...editData, sold_units: parseInt(e.target.value) })
                             }
                             className="w-20 text-center"
                           />
                         ) : (
-                          item.soldUnits
+                          item.sold_units
                         )}
                       </TableCell>
                       <TableCell className="text-center">
@@ -260,7 +327,7 @@ const ManageInventory = () => {
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="border-border/50">
-                          {item.syncSource || 'manual'}
+                          {item.sync_source || 'manual'}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
