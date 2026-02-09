@@ -129,7 +129,7 @@ export const EnterpriseNavbar = () => {
                 <motion.img
                   src={sourceLogo}
                   alt="Source"
-                  className="h-12 md:h-14 w-auto"
+                  className="w-auto h-[clamp(28px,6vw,36px)] md:h-[clamp(34px,3.2vw,48px)]"
                   whileHover={{ scale: 1.02 }}
                   transition={{ duration: 0.2 }}
                 />
