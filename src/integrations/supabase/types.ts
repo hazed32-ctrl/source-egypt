@@ -14,6 +14,90 @@ export type Database = {
   }
   public: {
     Tables: {
+      analytics_events: {
+        Row: {
+          created_at: string
+          device_type: string | null
+          event_data: Json | null
+          event_name: string
+          id: string
+          language: string | null
+          page_title: string | null
+          page_url: string | null
+          referrer: string | null
+          session_id: string | null
+          user_id: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+        }
+        Insert: {
+          created_at?: string
+          device_type?: string | null
+          event_data?: Json | null
+          event_name: string
+          id?: string
+          language?: string | null
+          page_title?: string | null
+          page_url?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Update: {
+          created_at?: string
+          device_type?: string | null
+          event_data?: Json | null
+          event_name?: string
+          id?: string
+          language?: string | null
+          page_title?: string | null
+          page_url?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Relationships: []
+      }
+      analytics_settings: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          key: string
+          updated_at: string
+          value: string | null
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          key: string
+          updated_at?: string
+          value?: string | null
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          key?: string
+          updated_at?: string
+          value?: string | null
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           created_at: string
@@ -52,12 +136,35 @@ export type Database = {
           },
         ]
       }
+      heatmap_exclusions: {
+        Row: {
+          created_at: string
+          id: string
+          reason: string | null
+          route_pattern: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reason?: string | null
+          route_pattern: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reason?: string | null
+          route_pattern?: string
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           agent_name: string | null
           area_sqm: number | null
           assigned_agent_id: string | null
+          assigned_at: string | null
           assigned_by: string | null
+          browser_language: string | null
           budget_max: number | null
           budget_min: number | null
           city: string | null
@@ -66,21 +173,34 @@ export type Database = {
           email: string
           id: string
           is_converted: boolean | null
+          landing_page: string | null
+          last_events_summary: Json | null
+          last_page_before_submit: string | null
+          lead_device_type: string | null
           message: string | null
           name: string
           payment_preference: string | null
           phone: string | null
           property_id: string | null
           property_type: string | null
+          referrer_domain: string | null
+          session_id: string | null
           source: string | null
           status: string
           updated_at: string
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
         }
         Insert: {
           agent_name?: string | null
           area_sqm?: number | null
           assigned_agent_id?: string | null
+          assigned_at?: string | null
           assigned_by?: string | null
+          browser_language?: string | null
           budget_max?: number | null
           budget_min?: number | null
           city?: string | null
@@ -89,21 +209,34 @@ export type Database = {
           email: string
           id?: string
           is_converted?: boolean | null
+          landing_page?: string | null
+          last_events_summary?: Json | null
+          last_page_before_submit?: string | null
+          lead_device_type?: string | null
           message?: string | null
           name: string
           payment_preference?: string | null
           phone?: string | null
           property_id?: string | null
           property_type?: string | null
+          referrer_domain?: string | null
+          session_id?: string | null
           source?: string | null
           status?: string
           updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
         }
         Update: {
           agent_name?: string | null
           area_sqm?: number | null
           assigned_agent_id?: string | null
+          assigned_at?: string | null
           assigned_by?: string | null
+          browser_language?: string | null
           budget_max?: number | null
           budget_min?: number | null
           city?: string | null
@@ -112,15 +245,26 @@ export type Database = {
           email?: string
           id?: string
           is_converted?: boolean | null
+          landing_page?: string | null
+          last_events_summary?: Json | null
+          last_page_before_submit?: string | null
+          lead_device_type?: string | null
           message?: string | null
           name?: string
           payment_preference?: string | null
           phone?: string | null
           property_id?: string | null
           property_type?: string | null
+          referrer_domain?: string | null
+          session_id?: string | null
           source?: string | null
           status?: string
           updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
         }
         Relationships: [
           {
@@ -263,6 +407,84 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_settings: {
+        Row: {
+          created_at: string
+          email_enabled: boolean
+          id: string
+          in_app_enabled: boolean
+          notification_type: Database["public"]["Enums"]["notification_type"]
+          recipient_roles: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email_enabled?: boolean
+          id?: string
+          in_app_enabled?: boolean
+          notification_type: Database["public"]["Enums"]["notification_type"]
+          recipient_roles?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email_enabled?: boolean
+          id?: string
+          in_app_enabled?: boolean
+          notification_type?: Database["public"]["Enums"]["notification_type"]
+          recipient_roles?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          entity_id: string | null
+          entity_type:
+            | Database["public"]["Enums"]["notification_entity_type"]
+            | null
+          id: string
+          is_read: boolean
+          metadata: Json | null
+          recipient_user_id: string
+          severity: Database["public"]["Enums"]["notification_severity"]
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?:
+            | Database["public"]["Enums"]["notification_entity_type"]
+            | null
+          id?: string
+          is_read?: boolean
+          metadata?: Json | null
+          recipient_user_id: string
+          severity?: Database["public"]["Enums"]["notification_severity"]
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?:
+            | Database["public"]["Enums"]["notification_entity_type"]
+            | null
+          id?: string
+          is_read?: boolean
+          metadata?: Json | null
+          recipient_user_id?: string
+          severity?: Database["public"]["Enums"]["notification_severity"]
+          title?: string
+          type?: Database["public"]["Enums"]["notification_type"]
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           assigned_agent_id: string | null
@@ -394,6 +616,36 @@ export type Database = {
           },
         ]
       }
+      session_events: {
+        Row: {
+          created_at: string
+          entity_id: string | null
+          event_name: string
+          id: string
+          meta: Json | null
+          page_path: string | null
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          entity_id?: string | null
+          event_name: string
+          id?: string
+          meta?: Json | null
+          page_path?: string | null
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string | null
+          event_name?: string
+          id?: string
+          meta?: Json | null
+          page_path?: string | null
+          session_id?: string
+        }
+        Relationships: []
+      }
       settings: {
         Row: {
           created_at: string
@@ -444,7 +696,25 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_old_session_events: { Args: never; Returns: undefined }
+      create_notification: {
+        Args: {
+          p_body: string
+          p_entity_id?: string
+          p_entity_type?: Database["public"]["Enums"]["notification_entity_type"]
+          p_metadata?: Json
+          p_recipient_user_id: string
+          p_severity?: Database["public"]["Enums"]["notification_severity"]
+          p_title: string
+          p_type: Database["public"]["Enums"]["notification_type"]
+        }
+        Returns: string
+      }
       get_property_progress: { Args: { status: string }; Returns: number }
+      get_unread_notification_count: {
+        Args: { p_user_id: string }
+        Returns: number
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -464,6 +734,24 @@ export type Database = {
         | "sales_agent"
         | "sales_manager"
         | "marketer"
+      notification_entity_type:
+        | "lead"
+        | "property"
+        | "document"
+        | "message"
+        | "resale_request"
+        | "booking"
+      notification_severity: "info" | "success" | "warning" | "critical"
+      notification_type:
+        | "lead_created"
+        | "lead_assigned"
+        | "document_added"
+        | "resale_request"
+        | "message_received"
+        | "property_status_changed"
+        | "booking_request"
+        | "agent_submission_approved"
+        | "agent_submission_rejected"
       property_progress_status:
         | "off_plan"
         | "ready_to_deliver"
@@ -596,6 +884,26 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "client", "sales_agent", "sales_manager", "marketer"],
+      notification_entity_type: [
+        "lead",
+        "property",
+        "document",
+        "message",
+        "resale_request",
+        "booking",
+      ],
+      notification_severity: ["info", "success", "warning", "critical"],
+      notification_type: [
+        "lead_created",
+        "lead_assigned",
+        "document_added",
+        "resale_request",
+        "message_received",
+        "property_status_changed",
+        "booking_request",
+        "agent_submission_approved",
+        "agent_submission_rejected",
+      ],
       property_progress_status: [
         "off_plan",
         "ready_to_deliver",
