@@ -133,71 +133,20 @@ export const EnterpriseNavbar = () => {
 
               {/* Center: Desktop Navigation */}
               <div className="hidden lg:flex items-center gap-1">
-                {!navLoading && navItems.map((item) => {
-                  const hasChildren = item.children && item.children.length > 0;
-                  const isCompare = item.label_en === 'Compare';
-
-                  return (
-                    <div
-                      key={item.id}
-                      className="relative"
-                      onMouseEnter={() => hasChildren && handleMouseEnter(item.id)}
-                      onMouseLeave={handleMouseLeave}
-                    >
-                      {hasChildren && item.is_mega_menu ? (
-                        <button
-                          className={cn(
-                            "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                            openMegaMenu === item.id
-                              ? "text-primary bg-secondary/50"
-                              : "text-muted-foreground hover:text-foreground hover:bg-secondary/30"
-                          )}
-                          aria-expanded={openMegaMenu === item.id}
-                          aria-haspopup="true"
-                        >
-                          <DynamicIcon name={item.icon} className="w-4 h-4" />
-                          <span>{getLabel(item)}</span>
-                          <ChevronDown className={cn(
-                            "w-3.5 h-3.5 transition-transform duration-200",
-                            openMegaMenu === item.id ? "rotate-180" : ""
-                          )} />
-                        </button>
-                      ) : (
-                        <Link
-                          to={item.url || '#'}
-                          className={cn(
-                            "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors relative",
-                            location.pathname === item.url
-                              ? "text-primary"
-                              : "text-muted-foreground hover:text-foreground hover:bg-secondary/30"
-                          )}
-                        >
-                          {isCompare ? (
-                            <ArrowLeftRight className="w-4 h-4" />
-                          ) : (
-                            <DynamicIcon name={item.icon} className="w-4 h-4" />
-                          )}
-                          <span>{getLabel(item)}</span>
-                          {isCompare && compareIds.length > 0 && (
-                            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center font-bold">
-                              {compareIds.length}
-                            </span>
-                          )}
-                        </Link>
-                      )}
-
-                      {/* Mega Menu */}
-                      {hasChildren && item.is_mega_menu && (
-                        <MegaMenu
-                          item={item}
-                          isOpen={openMegaMenu === item.id}
-                          onClose={() => setOpenMegaMenu(null)}
-                          getLabel={getLabel}
-                        />
-                      )}
-                    </div>
-                  );
-                })}
+                {fixedNavItems.map((item) => (
+                  <Link
+                    key={item.id}
+                    to={item.url}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                      location.pathname === item.url
+                        ? "text-primary"
+                        : "text-muted-foreground hover:text-foreground hover:bg-secondary/30"
+                    )}
+                  >
+                    <span>{item.label}</span>
+                  </Link>
+                ))}
               </div>
 
               {/* Right: Actions */}
