@@ -11,6 +11,7 @@ import {
   Percent
 } from 'lucide-react';
 import PriceDeltaIndicator from '@/components/property/PriceDeltaIndicator';
+import PropertyPhotoUpload from '@/components/property/PropertyPhotoUpload';
 import PortalLayout from '@/components/portal/PortalLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
