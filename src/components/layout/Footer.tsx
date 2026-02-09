@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import sourceLogo from '@/assets/source-logo.svg';
+import sourceLogo from '@/assets/logo-b-secondary.svg';
 
 const Footer = () => {
   const { t } = useTranslation();
