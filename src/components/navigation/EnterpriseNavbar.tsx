@@ -129,10 +129,12 @@ export const EnterpriseNavbar = () => {
                 <motion.img
                   src={sourceLogo}
                   alt="Source"
-                  className="h-12 md:h-14 w-auto"
+                  className="w-auto"
+                  style={{ height: 'clamp(28px, 6vw, 36px)' }}
                   whileHover={{ scale: 1.02 }}
                   transition={{ duration: 0.2 }}
                 />
+                <style>{`@media (min-width: 768px) { [alt="Source"] { height: clamp(34px, 3.2vw, 48px) !important; } }`}</style>
               </Link>
 
               {/* Center: Desktop Navigation */}
