@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import sourceLogo from '@/assets/source-logo.svg';
+import sourceLogo from '@/assets/logo-b-secondary.svg';
 import { useCountUp } from '@/hooks/useCountUp';
 
 const CountUpStat = ({ value, suffix }: { value: number; suffix: string }) => {

@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import sourceLogo from '@/assets/source-logo.svg';
+import sourceLogo from '@/assets/logo-b-secondary.svg';
 
 interface LoadingScreenProps {
   isLoading: boolean;

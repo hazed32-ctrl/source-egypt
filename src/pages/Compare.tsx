@@ -24,7 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useCompare } from '@/contexts/CompareContext';
-import sourceLogo from '@/assets/source-logo.svg';
+import sourceLogo from '@/assets/logo-b-secondary.svg';
 
 interface Property {
   id: string;

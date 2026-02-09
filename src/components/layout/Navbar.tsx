@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
-import sourceLogo from '@/assets/source-logo.svg';
+import sourceLogo from '@/assets/logo-b-secondary.svg';
 
 const Navbar = () => {
   const { t } = useTranslation();

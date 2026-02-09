@@ -23,7 +23,7 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { useCompare } from '@/contexts/CompareContext';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import sourceLogo from '@/assets/source-logo.svg';
+import sourceLogo from '@/assets/logo-b-secondary.svg';
 import DynamicIcon from './DynamicIcon';
 
 interface MobileDrawerProps {

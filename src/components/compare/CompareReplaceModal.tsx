@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, X, RefreshCw } from 'lucide-react';
 import { useCompare } from '@/contexts/CompareContext';
 import { Button } from '@/components/ui/button';
-import sourceLogo from '@/assets/source-logo.svg';
+import sourceLogo from '@/assets/logo-b-secondary.svg';
 
 interface CompareReplaceModalProps {
   open: boolean;
