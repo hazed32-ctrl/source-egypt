@@ -28,37 +28,30 @@ const ResetPassword = () => {
   const [errors, setErrors] = useState<{ password?: string; confirmPassword?: string }>({});
   const navigate = useNavigate();
 
-  // Check if we have a valid recovery session
+  // Listen for recovery session from Supabase auth
   useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      // Check URL hash for recovery token (Supabase sends it as a fragment)
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const accessToken = hashParams.get('access_token');
-      const type = hashParams.get('type');
-      
-      if (type === 'recovery' && accessToken) {
-        // Set the session from the recovery token
-        const { error } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: hashParams.get('refresh_token') || '',
-        });
-        
-        if (error) {
-          console.error('Session error:', error);
-          setIsValidSession(false);
-        } else {
+    // Listen for PASSWORD_RECOVERY event (handles both PKCE and hash-based flows)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
+        if (session) {
           setIsValidSession(true);
         }
-      } else if (session) {
+      }
+    });
+
+    // Also check if session already exists (e.g. user navigated here while logged in)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
         setIsValidSession(true);
       } else {
-        setIsValidSession(false);
+        // Give onAuthStateChange a moment to fire (hash/PKCE processing)
+        setTimeout(() => {
+          setIsValidSession((prev) => prev === null ? false : prev);
+        }, 2000);
       }
-    };
+    });
 
-    checkSession();
+    return () => subscription.unsubscribe();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
