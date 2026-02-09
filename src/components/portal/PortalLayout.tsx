@@ -1,4 +1,5 @@
 import { ReactNode, useState } from 'react';
+import NotificationBell from '@/components/portal/NotificationBell';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -166,6 +167,8 @@ const PortalLayout = ({ children, title, subtitle, role }: PortalLayoutProps) =>
               </Link>
 
               <div className="flex items-center gap-2 md:gap-6">
+                {/* Notification Bell (admin/sales_manager) */}
+                {(isAdmin) && <NotificationBell />}
                 {/* User Info */}
                 {user && (
                   <div className="flex items-center gap-2 md:gap-3">
