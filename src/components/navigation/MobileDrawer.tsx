@@ -117,15 +117,6 @@ export const MobileDrawer = ({ isOpen, onClose, items, cta, getLabel }: MobileDr
 
             {/* Quick Actions */}
             <div className="p-4 space-y-3 border-b border-border/30">
-              {/* CTA Button */}
-              {cta?.is_visible && (
-                <Link to={cta.url} onClick={onClose}>
-                  <Button className="w-full btn-gold">
-                    <Phone className="w-4 h-4 mr-2" />
-                    {getLabel(cta)}
-                  </Button>
-                </Link>
-              )}
 
               {/* Auth Button */}
               {isAuthenticated && user ? (
