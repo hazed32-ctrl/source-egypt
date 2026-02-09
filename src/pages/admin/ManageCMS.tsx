@@ -15,7 +15,9 @@ import {
   EyeOff,
   GripVertical,
   Settings2,
+  Sparkles,
 } from 'lucide-react';
+import HeroCMSEditor from '@/components/cms/HeroCMSEditor';
 import PortalLayout from '@/components/portal/PortalLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
