@@ -19,6 +19,7 @@ interface Property {
   beds: number | null;
   baths: number | null;
   area: number | null;
+  price_delta_percent: number | null;
 }
 
 const MyAssets = () => {
