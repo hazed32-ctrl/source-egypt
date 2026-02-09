@@ -167,8 +167,8 @@ const PortalLayout = ({ children, title, subtitle, role }: PortalLayoutProps) =>
               </Link>
 
               <div className="flex items-center gap-2 md:gap-6">
-                {/* Notification Bell (admin/sales_manager) */}
-                {(isAdmin) && <NotificationBell />}
+                {/* Notification Bell (all authenticated users) */}
+                {user && <NotificationBell />}
                 {/* User Info */}
                 {user && (
                   <div className="flex items-center gap-2 md:gap-3">
