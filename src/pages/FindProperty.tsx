@@ -94,7 +94,7 @@ const FindProperty = () => {
                 >
                   <Search className="w-4 h-4 text-primary" />
                   <span className="text-sm font-medium text-primary">
-                    {language === 'ar' ? 'ابحث عن عقارك' : 'Property Finder'}
+                    {language === 'ar' ? 'ابحث عن عقارك' : 'Find your property'}
                   </span>
                 </motion.div>
 
