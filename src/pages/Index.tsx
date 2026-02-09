@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import sourceLogo from '@/assets/logo-b-secondary.svg';
 import { useCountUp } from '@/hooks/useCountUp';
+import { HeroContent, defaultHeroContent } from '@/components/cms/HeroContentType';
 
 const CountUpStat = ({ value, suffix }: { value: number; suffix: string }) => {
   const [inView, setInView] = useState(false);
@@ -93,13 +94,7 @@ const featuredProperties = [
   },
 ];
 
-// Stats
-const stats = [
-  { icon: Building2, value: 500, suffix: '+', label: 'Properties' },
-  { icon: Users, value: 2421, suffix: '+', label: 'Happy Clients' },
-  { icon: Award, value: 15, suffix: '+', label: 'Years Experience' },
-  { icon: TrendingUp, value: 98, suffix: '%', label: 'Satisfaction Rate' },
-];
+const statIcons = [Building2, Users, Award, TrendingUp];
 
 const leadSchema = z.object({
   name: z.string().trim().min(1, 'Name is required').max(100),
@@ -111,12 +106,28 @@ const leadSchema = z.object({
 const Index = () => {
   const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hero, setHero] = useState<HeroContent>(defaultHeroContent);
   const [leadForm, setLeadForm] = useState({
     name: '',
     email: '',
     phone: '',
     message: '',
   });
+
+  useEffect(() => {
+    supabase
+      .from('settings')
+      .select('value')
+      .eq('key', 'cms_home_hero')
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.value) {
+          try {
+            setHero({ ...defaultHeroContent, ...JSON.parse(data.value) });
+          } catch { /* keep defaults */ }
+        }
+      });
+  }, []);
 
   const handleLeadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -152,7 +163,7 @@ const Index = () => {
     <Layout>
       <FirstVisitLeadPopup />
       {/* Hero Section */}
-      <section className="relative min-h-[75vh] flex items-center justify-center overflow-hidden">
+      <section className={`relative flex items-center justify-center overflow-hidden ${hero.heroSize === 'small' ? 'min-h-[60vh]' : 'min-h-[75vh]'}`}>
         {/* Background Gradient */}
         <div className="absolute inset-0 bg-gradient-hero" />
         
@@ -191,10 +202,10 @@ const Index = () => {
               transition={{ duration: 0.8 }}
             >
               <h1 className="font-display text-5xl md:text-7xl font-semibold text-foreground mb-6 leading-tight">
-                Make It <span className="text-gold-gradient">Yours</span>
+                {hero.headline} <span className="text-gold-gradient">{hero.highlightWord}</span>
               </h1>
               <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
-                {t('hero.subtitle')}
+                {hero.subtitle}
               </p>
             </motion.div>
 
@@ -204,15 +215,15 @@ const Index = () => {
               transition={{ duration: 0.8, delay: 0.2 }}
               className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4"
             >
-              <Link to="/properties">
+              <Link to={hero.primaryCta.link}>
                 <Button className="btn-gold text-lg px-8 py-6">
-                  {t('hero.explore')}
+                  {hero.primaryCta.label}
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
-              <Link to="/find-property">
+              <Link to={hero.secondaryCta.link}>
                 <Button variant="outline" className="text-lg px-8 py-6 border-border/50 hover:border-primary/50 hover:bg-primary/5">
-                  Find your property
+                  {hero.secondaryCta.label}
                 </Button>
               </Link>
             </motion.div>
@@ -226,7 +237,9 @@ const Index = () => {
       <section className="py-20 border-y border-border/30">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
+            {hero.stats.map((stat, index) => {
+              const Icon = statIcons[index] || Building2;
+              return (
               <motion.div
                 key={stat.label}
                 initial={{ opacity: 0, y: 20 }}
@@ -236,14 +249,15 @@ const Index = () => {
                 className="text-center"
               >
                 <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <stat.icon className="w-8 h-8 text-primary" />
+                  <Icon className="w-8 h-8 text-primary" />
                 </div>
                 <p className="text-3xl font-display font-semibold text-foreground mb-1 tabular-nums">
                   <CountUpStat value={stat.value} suffix={stat.suffix} />
                 </p>
                 <p className="text-muted-foreground">{stat.label}</p>
               </motion.div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>

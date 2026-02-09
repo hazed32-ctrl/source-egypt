@@ -15,7 +15,9 @@ import {
   EyeOff,
   GripVertical,
   Settings2,
+  Sparkles,
 } from 'lucide-react';
+import HeroCMSEditor from '@/components/cms/HeroCMSEditor';
 import PortalLayout from '@/components/portal/PortalLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -124,8 +126,12 @@ const ManageCMS = () => {
           </p>
         </div>
 
-        <Tabs defaultValue="pages" className="space-y-6">
+        <Tabs defaultValue="hero" className="space-y-6">
           <TabsList className="glass-card border-border/30">
+            <TabsTrigger value="hero" className="gap-2">
+              <Sparkles className="w-4 h-4" />
+              Home Hero
+            </TabsTrigger>
             <TabsTrigger value="pages" className="gap-2">
               <FileText className="w-4 h-4" />
               Pages
@@ -135,6 +141,11 @@ const ManageCMS = () => {
               Popups
             </TabsTrigger>
           </TabsList>
+
+          {/* Home Hero Tab */}
+          <TabsContent value="hero">
+            <HeroCMSEditor />
+          </TabsContent>
 
           {/* Pages Tab */}
           <TabsContent value="pages" className="space-y-4">
