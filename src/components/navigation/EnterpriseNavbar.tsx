@@ -235,16 +235,6 @@ export const EnterpriseNavbar = () => {
               </div>
             </div>
 
-            {/* Integrated Quick Search Bar (Search Pages) */}
-            {isSearchPage && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                className="pb-3 hidden md:block"
-              >
-                <QuickSearch variant="expanded" />
-              </motion.div>
-            )}
           </div>
         </div>
       </nav>
@@ -253,7 +243,7 @@ export const EnterpriseNavbar = () => {
       <MobileDrawer
         isOpen={isMobileMenuOpen}
         onClose={() => setIsMobileMenuOpen(false)}
-        items={navItems}
+        items={fixedNavItems.map(i => ({ id: i.id, menu_id: '', parent_id: null, label_en: i.label, label_ar: i.label, url: i.url, icon: null, sort_order: 0, is_visible: true, is_mega_menu: false, roles_allowed: [], open_in_new_tab: false } as NavigationItem))}
         cta={cta}
         getLabel={getLabel}
       />
