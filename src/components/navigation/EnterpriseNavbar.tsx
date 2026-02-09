@@ -105,7 +105,7 @@ export const EnterpriseNavbar = () => {
   return (
     <>
       {/* Fixed height placeholder to prevent CLS */}
-      <div className="h-[80px]" aria-hidden="true" />
+      <div className="h-[72px] md:h-[88px]" aria-hidden="true" />
       
       <nav
         ref={navRef}
@@ -122,14 +122,14 @@ export const EnterpriseNavbar = () => {
             ? "glass-card shadow-lg"
             : "glass-card"
         )}>
-          <div className="container mx-auto px-4 md:px-6">
-            <div className="flex items-center justify-between h-16">
+        <div className="container mx-auto px-4 md:px-6">
+            <div className="flex items-center justify-between h-[56px] md:h-[72px]">
               {/* Left: Logo */}
-              <Link to="/" className="flex-shrink-0">
+              <Link to="/" className="flex-shrink-0 py-2 px-3.5">
                 <motion.img
                   src={sourceLogo}
                   alt="Source"
-                  className="w-auto h-[clamp(28px,6vw,36px)] md:h-[clamp(34px,3.2vw,48px)]"
+                  className="w-auto h-[clamp(38px,5vw,54px)]"
                   whileHover={{ scale: 1.02 }}
                   transition={{ duration: 0.2 }}
                 />
