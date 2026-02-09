@@ -186,6 +186,7 @@ const ManageProperties = () => {
         progress_percent: formData.progress_percent,
         assigned_user_id: formData.assigned_user_id || null,
         created_by: user?.id || null,
+        price_delta_percent: formData.price_delta_percent ? parseFloat(formData.price_delta_percent) : null,
       };
 
       if (editingProperty) {
