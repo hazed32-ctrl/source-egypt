@@ -36,7 +36,7 @@ export const mockUsers: User[] = [
     fullName: 'Sara Mohamed',
     phone: '+201234567891',
     avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sara',
-    role: 'agent',
+    role: 'sales_agent',
     status: 'active',
     createdAt: '2024-02-20T10:00:00Z',
     updatedAt: '2024-11-15T10:00:00Z',

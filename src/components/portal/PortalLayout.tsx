@@ -60,11 +60,12 @@ const agentNavItems = [
 ];
 
 const roleLabels: Record<UserRole, string> = {
-  super_admin: 'Super Admin',
   admin: 'Administrator',
-  agent: 'Agent',
-  sales_agent: 'Sales Agent',
   client: 'Client',
+  sales_agent: 'Sales Agent',
+  sales_manager: 'Sales Manager',
+  marketer: 'Marketer',
+  broker: 'Broker',
 };
 
 const PortalLayout = ({ children, title, subtitle, role }: PortalLayoutProps) => {

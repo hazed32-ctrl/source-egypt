@@ -228,8 +228,8 @@ export const ApiAuthProvider = ({ children }: { children: ReactNode }) => {
     signOut,
     updateProfile,
     hasRole,
-    isAdmin: user?.role === 'admin' || user?.role === 'super_admin',
-    isAgent: user?.role === 'agent' || user?.role === 'sales_agent',
+    isAdmin: user?.role === 'admin',
+    isAgent: user?.role === 'sales_agent',
     isClient: user?.role === 'client',
   };
 

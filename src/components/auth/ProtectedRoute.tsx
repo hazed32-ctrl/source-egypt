@@ -40,7 +40,7 @@ const ProtectedRoute = ({
     // Determine where to redirect based on user's role
     const fallbackPath = user.role === 'client' 
       ? '/client-portal/dashboard'
-      : user.role === 'agent'
+      : user.role === 'sales_agent'
       ? '/agent/dashboard'
       : '/';
     
