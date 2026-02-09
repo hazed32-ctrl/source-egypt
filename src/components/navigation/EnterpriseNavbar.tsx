@@ -179,6 +179,17 @@ export const EnterpriseNavbar = () => {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
+                {/* Theme Toggle */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-muted-foreground hover:text-foreground hidden sm:flex"
+                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  aria-label="Toggle theme"
+                >
+                  {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                </Button>
+
                 {/* User Menu */}
                 {isAuthBusy ? (
                   <Button variant="ghost" className="gap-2 text-muted-foreground hidden sm:flex" disabled>
