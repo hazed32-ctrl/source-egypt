@@ -206,7 +206,7 @@ export const EnterpriseNavbar = () => {
                     <DropdownMenuContent align={isRTL ? 'start' : 'end'} className="glass-card border-border/50">
                       <DropdownMenuItem asChild>
                         <Link to={portalPath}>
-                          {isAdmin ? 'Admin Dashboard' : 'My Portal'}
+                          {isAdmin ? t('nav.adminDashboard') : t('nav.myPortal')}
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={handleSignOut} className="text-destructive">

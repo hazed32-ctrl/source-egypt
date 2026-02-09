@@ -278,7 +278,7 @@ export const MobileDrawer = ({ isOpen, onClose, items, cta, getLabel }: MobileDr
                   className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
-                  Sign Out
+                  {t('nav.signOut')}
                 </Button>
               )}
             </div>
