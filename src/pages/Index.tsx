@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { ArrowRight, Building2, Users, Award, TrendingUp, Send, Loader2 } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
+import FirstVisitLeadPopup from '@/components/landing/FirstVisitLeadPopup';
 import PropertyCard from '@/components/property/PropertyCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
