@@ -177,16 +177,20 @@ const Footer = () => {
             <p className="text-muted-foreground mb-4">
               Stay updated with our latest properties and exclusive offers.
             </p>
-            <div className="flex gap-2">
+            <form onSubmit={handleNewsletterSubmit} className="flex gap-2">
               <Input
                 type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder={t('footer.newsletterPlaceholder', 'Your email')}
                 className="input-luxury flex-1"
+                disabled={isSubmitting}
+                required
               />
-              <Button className="btn-gold px-4">
-                <ArrowRight className="w-5 h-5" />
+              <Button type="submit" className="btn-gold px-4" disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
               </Button>
-            </div>
+            </form>
           </div>
         </div>
 
