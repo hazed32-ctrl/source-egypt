@@ -71,10 +71,10 @@ const featuredProperties = [
 
 // Stats
 const stats = [
-  { icon: Building2, value: '500+', label: 'Properties' },
-  { icon: Users, value: '2,000+', label: 'Happy Clients' },
-  { icon: Award, value: '15+', label: 'Years Experience' },
-  { icon: TrendingUp, value: '98%', label: 'Satisfaction Rate' },
+  { icon: Building2, value: 500, suffix: '+', label: 'Properties' },
+  { icon: Users, value: 2421, suffix: '+', label: 'Happy Clients' },
+  { icon: Award, value: 15, suffix: '+', label: 'Years Experience' },
+  { icon: TrendingUp, value: 98, suffix: '%', label: 'Satisfaction Rate' },
 ];
 
 const leadSchema = z.object({
