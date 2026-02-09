@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { 
@@ -9,10 +10,14 @@ import {
   Phone, 
   MapPin,
   ArrowRight,
-  MessageCircle
+  MessageCircle,
+  Loader2
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { z } from 'zod';
 import sourceLogo from '@/assets/logo-b-secondary.svg';
 
 const PHONE_NUMBER = '+201036786432';
@@ -21,8 +26,41 @@ const CONTACT_EMAIL = 'contact@source-eg.com';
 const ADDRESS = 'Al Thawra Street 107, Cairo, Cairo, Egypt.';
 const WHATSAPP_URL = `https://wa.me/${PHONE_NUMBER}`;
 
+const emailSchema = z.string().trim().email('Please enter a valid email').max(255);
+
 const Footer = () => {
   const { t } = useTranslation();
+  const [email, setEmail] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const parsed = emailSchema.safeParse(email);
+    if (!parsed.success) {
+      toast.error(parsed.error.errors[0].message);
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from('newsletter_subscribers' as any)
+        .insert({ email: parsed.data } as any);
+      if (error) {
+        if (error.code === '23505') {
+          toast.info('You are already subscribed!');
+        } else {
+          throw error;
+        }
+      } else {
+        toast.success('Successfully subscribed to our newsletter!');
+        setEmail('');
+      }
+    } catch {
+      toast.error('Something went wrong. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   const currentYear = new Date().getFullYear();
 
   const quickLinks = [
@@ -139,16 +177,20 @@ const Footer = () => {
             <p className="text-muted-foreground mb-4">
               Stay updated with our latest properties and exclusive offers.
             </p>
-            <div className="flex gap-2">
+            <form onSubmit={handleNewsletterSubmit} className="flex gap-2">
               <Input
                 type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder={t('footer.newsletterPlaceholder', 'Your email')}
                 className="input-luxury flex-1"
+                disabled={isSubmitting}
+                required
               />
-              <Button className="btn-gold px-4">
-                <ArrowRight className="w-5 h-5" />
+              <Button type="submit" className="btn-gold px-4" disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
               </Button>
-            </div>
+            </form>
           </div>
         </div>
 
