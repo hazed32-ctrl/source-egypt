@@ -10,6 +10,7 @@ import {
   User,
   Percent
 } from 'lucide-react';
+import PriceDeltaIndicator from '@/components/property/PriceDeltaIndicator';
 import PortalLayout from '@/components/portal/PortalLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
