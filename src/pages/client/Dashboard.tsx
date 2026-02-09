@@ -5,6 +5,7 @@ import PortalLayout from '@/components/portal/PortalLayout';
 import { useApiAuth } from '@/contexts/ApiAuthContext';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ContactAgentButton } from '@/components/client/ContactAgentButton';
+import RecommendationsWidget from '@/components/client/RecommendationsWidget';
 import { cn } from '@/lib/utils';
 
 const dashboardActions = [
