@@ -6,6 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { useApiAuth } from '@/contexts/ApiAuthContext';
 import PriceDeltaIndicator from '@/components/property/PriceDeltaIndicator';
+import LivePhotosGallery from '@/components/property/LivePhotosGallery';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Property {
@@ -157,11 +158,14 @@ const MyAssets = () => {
                 {/* Progress */}
                 {property.status === 'under_construction' && property.progress_percent !== null && (
                   <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between items-center text-sm">
                       <span className="text-muted-foreground">Construction Progress</span>
                       <span className="text-primary font-medium">{property.progress_percent}%</span>
                     </div>
                     <Progress value={property.progress_percent} className="h-2" />
+                    <div className="pt-1">
+                      <LivePhotosGallery propertyId={property.id} propertyTitle={property.title} />
+                    </div>
                   </div>
                 )}
 

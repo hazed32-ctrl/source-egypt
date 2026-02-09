@@ -11,6 +11,7 @@ import {
   Percent
 } from 'lucide-react';
 import PriceDeltaIndicator from '@/components/property/PriceDeltaIndicator';
+import PropertyPhotoUpload from '@/components/property/PropertyPhotoUpload';
 import PortalLayout from '@/components/portal/PortalLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -416,6 +417,13 @@ const ManageProperties = () => {
                   className="mt-2"
                 />
               </div>
+
+              {/* Live Photos - only shown when editing */}
+              {editingProperty && (
+                <div className="md:col-span-2 border-t border-border/20 pt-4">
+                  <PropertyPhotoUpload propertyId={editingProperty.id} />
+                </div>
+              )}
 
               <div className="md:col-span-2">
                 <Button

@@ -581,6 +581,44 @@ export type Database = {
         }
         Relationships: []
       }
+      property_photos: {
+        Row: {
+          created_at: string
+          file_path: string
+          id: string
+          note: string | null
+          property_id: string
+          taken_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_path: string
+          id?: string
+          note?: string | null
+          property_id: string
+          taken_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_path?: string
+          id?: string
+          note?: string | null
+          property_id?: string
+          taken_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_photos_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resale_requests: {
         Row: {
           created_at: string
