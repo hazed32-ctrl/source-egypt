@@ -68,6 +68,7 @@ const roleLabels: Record<UserRole, string> = {
 };
 
 const PortalLayout = ({ children, title, subtitle, role }: PortalLayoutProps) => {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, user, isAdmin, isAgent } = useApiAuth();
