@@ -1,4 +1,5 @@
 import { ReactNode, useState } from 'react';
+import NotificationBell from '@/components/portal/NotificationBell';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
