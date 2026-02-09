@@ -202,15 +202,6 @@ const Index = () => {
         </div>
 
         {/* Scroll Indicator */}
-        <motion.div
-          animate={{ y: [0, 10, 0] }}
-          transition={{ duration: 2, repeat: Infinity }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2"
-        >
-          <div className="w-6 h-10 rounded-full border-2 border-muted-foreground/30 flex justify-center pt-2">
-            <div className="w-1.5 h-3 rounded-full bg-primary" />
-          </div>
-        </motion.div>
       </section>
 
       {/* Stats Section */}
