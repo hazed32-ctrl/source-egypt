@@ -231,7 +231,7 @@ const en = {
     about: {
       heroTitle: 'Redefining',
       heroTitleHighlight: 'Luxury Living',
-      heroDescription: 'For over 15 years, Source has been the trusted partner for discerning buyers seeking exceptional properties in Egypt\'s most prestigious locations. Our commitment to excellence and personalized service has made us the leading luxury real estate agency in the region.',
+      heroDescription: 'For over 13 years, Source has been the trusted partner for discerning buyers seeking exceptional properties in Egypt\'s most prestigious locations. Our commitment to excellence and personalized service has made us the leading luxury real estate agency in the region.',
       propertiesSold: 'Properties Sold',
       happyClients: 'Happy Clients',
       yearsExperience: 'Years Experience',

@@ -74,7 +74,7 @@ const About = () => {
               <span className="text-gold-gradient">Luxury Living</span>
             </h1>
             <p className="text-muted-foreground text-lg leading-relaxed">
-              For over 15 years, Estates has been the trusted partner for discerning buyers 
+              For over 13 years, Estates has been the trusted partner for discerning buyers 
               seeking exceptional properties in Egypt's most prestigious locations. Our commitment 
               to excellence and personalized service has made us the leading luxury real estate 
               agency in the region.

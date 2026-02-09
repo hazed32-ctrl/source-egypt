@@ -28,7 +28,7 @@ export const defaultHeroContent: HeroContent = {
   stats: [
     { value: 500, suffix: '+', label: 'Properties' },
     { value: 2421, suffix: '+', label: 'Happy Clients' },
-    { value: 15, suffix: '+', label: 'Years Experience' },
+    { value: 13, suffix: '+', label: 'Years Experience' },
     { value: 98, suffix: '%', label: 'Satisfaction Rate' },
   ],
   heroSize: 'default',
