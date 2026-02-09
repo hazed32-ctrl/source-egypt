@@ -125,8 +125,9 @@ const MyAssets = () => {
             No Properties Yet
           </h3>
           <p className="text-muted-foreground max-w-md mx-auto">
-            You don't have any properties assigned to your account yet.
-            Contact your administrator to get started.
+            {searchQuery
+              ? 'No properties match your search. Try a different term.'
+              : "You don't have any properties assigned to your account yet. Contact your administrator to get started."}
           </p>
         </motion.div>
       ) : (
