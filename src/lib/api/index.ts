@@ -12,33 +12,18 @@ export { apiClient, tokenManager, get, post, put, patch, del, uploadFile } from 
 // Types
 export * from './types';
 
-// Mock handlers (for development)
+// Mock handlers (only those still used by pages not yet migrated to Supabase)
 export {
-  mockAuth,
-  mockUsersApi,
   mockPropertiesApi,
-  mockInventoryApi,
-  mockClientAssetsApi,
-  mockLeadsApi,
   mockCMSApi,
-  mockResaleApi,
   mockSyncApi,
-  mockSettingsApi,
-  decodeMockToken,
 } from './mock/mockHandlers';
 
-// Mock data (for development)
+// Mock data (only those still used)
 export {
-  mockUsers,
   mockProperties,
   mockPropertyListItems,
-  mockInventory,
-  mockClientAssets,
-  mockLeads,
   mockCMSPages,
   mockPopups,
-  mockResaleRequests,
   mockSyncLogs,
-  mockThemeSettings,
-  mockCurrentUser,
 } from './mock/mockData';
