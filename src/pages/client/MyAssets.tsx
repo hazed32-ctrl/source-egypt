@@ -132,7 +132,7 @@ const MyAssets = () => {
         </motion.div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {properties.map((property, index) => (
+          {filteredProperties.map((property, index) => (
             <motion.div
               key={property.id}
               initial={{ opacity: 0, y: 20 }}
