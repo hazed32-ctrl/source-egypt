@@ -141,6 +141,7 @@ const ManageProperties = () => {
       status: 'under_construction',
       progress_percent: 0,
       assigned_user_id: '',
+      price_delta_percent: '',
     });
     setEditingProperty(null);
   };
