@@ -127,7 +127,7 @@ export const MobileDrawer = ({ isOpen, onClose, items, cta, getLabel }: MobileDr
                 <Link to={portalPath} onClick={onClose}>
                   <Button variant="outline" className="w-full border-border/50">
                     <User className="w-4 h-4 mr-2" />
-                    {isAdmin ? 'Admin Dashboard' : 'My Portal'}
+                    {isAdmin ? t('nav.adminDashboard') : t('nav.myPortal')}
                   </Button>
                 </Link>
               ) : (
