@@ -237,7 +237,9 @@ const Index = () => {
       <section className="py-20 border-y border-border/30">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
+            {hero.stats.map((stat, index) => {
+              const Icon = statIcons[index] || Building2;
+              return (
               <motion.div
                 key={stat.label}
                 initial={{ opacity: 0, y: 20 }}
@@ -247,14 +249,15 @@ const Index = () => {
                 className="text-center"
               >
                 <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <stat.icon className="w-8 h-8 text-primary" />
+                  <Icon className="w-8 h-8 text-primary" />
                 </div>
                 <p className="text-3xl font-display font-semibold text-foreground mb-1 tabular-nums">
                   <CountUpStat value={stat.value} suffix={stat.suffix} />
                 </p>
                 <p className="text-muted-foreground">{stat.label}</p>
               </motion.div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
