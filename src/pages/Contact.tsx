@@ -40,20 +40,21 @@ const Contact = () => {
     {
       icon: Phone,
       title: 'Phone',
-      value: '+20 123 456 7890',
-      link: 'tel:+201234567890',
+      value: '+20 103 678 6432',
+      link: 'tel:+201036786432',
     },
     {
       icon: Mail,
       title: 'Email',
-      value: 'info@estates.com',
-      link: 'mailto:info@estates.com',
+      value: 'contact@source-eg.com',
+      link: 'mailto:contact@source-eg.com',
     },
     {
       icon: MapPin,
       title: 'Address',
-      value: '123 Luxury Avenue, New Cairo, Egypt',
-      link: 'https://maps.google.com',
+      value: 'Al Thawra Street 107, Cairo, Cairo, Egypt.',
+      link: 'https://share.google/Fsk04K9YlO2ZuQpu9',
+      external: true,
     },
     {
       icon: Clock,
