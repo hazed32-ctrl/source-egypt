@@ -86,16 +86,6 @@ const Compare = () => {
       setError(null);
 
       try {
-        // Call the public compare edge function
-        const { data, error: invokeError } = await supabase.functions.invoke('compare-properties', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: null,
-        });
-
-        // The edge function expects query params, so we need to call it differently
         const response = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/compare-properties?ids=${urlIds.join(',')}`,
           {
