@@ -409,6 +409,13 @@
   ::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--muted-foreground));
   }
+
+  /* Light mode btn-gold text fix */
+  @media (prefers-color-scheme: light) {
+    .btn-gold {
+      @apply text-white;
+    }
+  }
 }
 
 @layer utilities {
