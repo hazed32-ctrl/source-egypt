@@ -228,10 +228,12 @@ const Contact = () => {
                 <p className="text-muted-foreground mb-4">
                   Get instant responses from our sales team on WhatsApp.
                 </p>
-                <Button className="bg-success hover:bg-success/90 text-success-foreground gap-2">
-                  <MessageCircle className="w-5 h-5" />
-                  Chat on WhatsApp
-                </Button>
+                <a href="https://wa.me/201036786432" target="_blank" rel="noopener noreferrer">
+                  <Button className="bg-success hover:bg-success/90 text-success-foreground gap-2">
+                    <MessageCircle className="w-5 h-5" />
+                    Call on WhatsApp
+                  </Button>
+                </a>
               </motion.div>
 
               {/* Map Placeholder */}
