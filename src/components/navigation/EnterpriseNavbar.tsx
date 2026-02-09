@@ -151,10 +151,6 @@ export const EnterpriseNavbar = () => {
 
               {/* Right: Actions */}
               <div className="flex items-center gap-2">
-                {/* Quick Search (Desktop) */}
-                <div className="hidden md:block">
-                  <QuickSearch variant="header" />
-                </div>
 
                 {/* Language Switcher */}
                 <DropdownMenu>
