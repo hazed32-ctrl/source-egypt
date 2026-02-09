@@ -163,7 +163,7 @@ const Index = () => {
     <Layout>
       <FirstVisitLeadPopup />
       {/* Hero Section */}
-      <section className="relative min-h-[75vh] flex items-center justify-center overflow-hidden">
+      <section className={`relative flex items-center justify-center overflow-hidden ${hero.heroSize === 'small' ? 'min-h-[60vh]' : 'min-h-[75vh]'}`}>
         {/* Background Gradient */}
         <div className="absolute inset-0 bg-gradient-hero" />
         
