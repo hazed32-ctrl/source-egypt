@@ -192,7 +192,7 @@ const AdminDashboard = () => {
                       className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30 border border-border/30"
                     >
                       <img
-                        src={property.imageUrl || '/placeholder.svg'}
+                        src={property.image_url || '/placeholder.svg'}
                         alt={property.title}
                         className="w-12 h-12 rounded-lg object-cover"
                       />
