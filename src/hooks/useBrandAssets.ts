@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 // Static imports as fallbacks
-import navLogoFallback from '@/assets/logo-a-navbar.svg';
-import brandLogoFallback from '@/assets/logo-b-secondary.svg';
+import navLogoFallback from '@/assets/logo-a-navbar.png';
+import brandLogoFallback from '@/assets/logo-b-secondary.png';
 
 interface BrandAssets {
   navLogoUrl: string;
