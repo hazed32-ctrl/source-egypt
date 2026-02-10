@@ -29,6 +29,7 @@ const Auth = () => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const { signIn, user, isLoading: authLoading } = useApiAuth();
   const navigate = useNavigate();
+  const { brandLogoUrl } = useBrandAssets();
 
   const getDashboardPath = (role?: string) => {
     if (role === 'admin' || role === 'super_admin') return '/admin/dashboard';
