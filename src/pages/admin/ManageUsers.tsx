@@ -16,6 +16,9 @@ import {
   Trash2,
   Save,
   AlertTriangle,
+  UserPlus,
+  Copy,
+  CheckCircle,
 } from 'lucide-react';
 import PortalLayout from '@/components/portal/PortalLayout';
 import { Button } from '@/components/ui/button';
