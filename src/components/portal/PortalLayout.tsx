@@ -74,6 +74,7 @@ const PortalLayout = ({ children, title, subtitle, role }: PortalLayoutProps) =>
   const navigate = useNavigate();
   const { signOut, user, isAdmin, isAgent } = useApiAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { brandLogoUrl } = useBrandAssets();
 
   // Determine nav items based on role prop or user's actual role
   const getNavItems = () => {
