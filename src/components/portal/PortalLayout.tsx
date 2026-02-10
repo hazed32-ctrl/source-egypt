@@ -169,7 +169,7 @@ const PortalLayout = ({ children, title, subtitle, role }: PortalLayoutProps) =>
               </Button>
 
               <Link to="/" className="flex items-center gap-3">
-                <img src={sourceLogo} alt="Source" className="h-8 md:h-10 w-auto" />
+                <img src={brandLogoUrl} alt="Source" className="h-8 md:h-10 w-auto" />
               </Link>
 
               <div className="flex items-center gap-2 md:gap-6">

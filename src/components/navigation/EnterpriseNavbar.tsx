@@ -128,11 +128,9 @@ export const EnterpriseNavbar = () => {
               {/* Left: Logo */}
               <Link to="/" className="flex-shrink-0 py-2 px-3.5">
                 <motion.img
+                  data-nav-logo=""
                   src={navLogoUrl}
                   alt="Source"
-                  style={{
-                    maxWidth: `${navLogoMaxWidth}px`,
-                  }}
                   className="w-auto object-contain"
                   style={{
                     height: `${navLogoHeightMobile}px`,

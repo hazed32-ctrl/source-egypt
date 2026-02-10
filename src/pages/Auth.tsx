@@ -133,7 +133,7 @@ const Auth = () => {
             transition={{ delay: 0.2 }}
           >
             <img 
-              src={sourceLogo} 
+              src={brandLogoUrl} 
               alt="Source" 
               className="h-16 w-auto"
             />

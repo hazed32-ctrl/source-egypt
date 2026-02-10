@@ -95,7 +95,7 @@ const Footer = () => {
           {/* Brand Column */}
           <div className="space-y-6">
             <Link to="/" className="flex items-center gap-3">
-              <img src={sourceLogo} alt="Source" className="h-16 w-auto" />
+              <img src={brandLogoUrl} alt="Source" className="h-16 w-auto" />
             </Link>
             <p className="text-muted-foreground leading-relaxed">
               {t('footer.brandDescription')}
