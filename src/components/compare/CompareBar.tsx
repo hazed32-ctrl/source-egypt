@@ -4,8 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { GitCompare, X, Trash2 } from 'lucide-react';
 import { useCompare } from '@/contexts/CompareContext';
 import { Button } from '@/components/ui/button';
-import { mockPropertiesApi } from '@/lib/api';
-import { PropertyListItem } from '@/lib/api/types';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PropertyPreview {
   id: string;
@@ -27,15 +26,23 @@ const CompareBar = () => {
       }
 
       try {
-        const response = await mockPropertiesApi.list({ limit: 50 });
-        const matched = response.data
-          .filter(p => ids.includes(p.id))
-          .map(p => ({ id: p.id, title: p.title, imageUrl: p.imageUrl }));
-        
+        const { data, error } = await supabase
+          .from('properties')
+          .select('id, title, image_url')
+          .in('id', ids);
+
+        if (error) throw error;
+
+        const matched = (data || []).map(p => ({
+          id: p.id,
+          title: p.title,
+          imageUrl: p.image_url,
+        }));
+
         // Remove invalid ids
         const validIds = matched.map(p => p.id);
         ids.filter(id => !validIds.includes(id)).forEach(id => remove(id));
-        
+
         setProperties(matched);
       } catch (error) {
         console.error('Failed to fetch compare properties:', error);
