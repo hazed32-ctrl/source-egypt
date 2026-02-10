@@ -452,7 +452,7 @@ const ManageCMS = () => {
                   </Card>
                 ))}
 
-                <Button className="gap-2">
+                <Button className="gap-2" onClick={openCreatePopup}>
                   <Plus className="w-4 h-4" />
                   Create New Popup
                 </Button>
@@ -461,45 +461,70 @@ const ManageCMS = () => {
           </TabsContent>
         </Tabs>
 
-        {/* Popup Edit Dialog */}
-        <Dialog open={!!selectedPopup} onOpenChange={() => setSelectedPopup(null)}>
+        {/* Popup Create/Edit Dialog */}
+        <Dialog open={!!selectedPopup} onOpenChange={(open) => { if (!open) { setSelectedPopup(null); setIsCreating(false); } }}>
           <DialogContent className="glass-card border-border/50 max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Edit Popup</DialogTitle>
+              <DialogTitle>{isCreating ? 'Create Popup' : 'Edit Popup'}</DialogTitle>
             </DialogHeader>
             {selectedPopup && (
               <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Popup Name</Label>
+                  <Input
+                    value={selectedPopup.name}
+                    onChange={(e) => updatePopupField('name', e.target.value)}
+                    placeholder="e.g. Welcome Offer"
+                    className="input-luxury"
+                  />
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Title (English)</Label>
                     <Input
                       value={selectedPopup.content?.en?.title || ''}
+                      onChange={(e) => updatePopupContent('en', 'title', e.target.value)}
                       className="input-luxury"
-                      readOnly
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Title (Arabic)</Label>
                     <Input
                       value={selectedPopup.content?.ar?.title || ''}
+                      onChange={(e) => updatePopupContent('ar', 'title', e.target.value)}
                       className="input-luxury"
                       dir="rtl"
-                      readOnly
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>Body (English)</Label>
-                  <Textarea
-                    value={selectedPopup.content?.en?.body || ''}
-                    className="input-luxury"
-                    readOnly
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Body (English)</Label>
+                    <Textarea
+                      value={selectedPopup.content?.en?.body || ''}
+                      onChange={(e) => updatePopupContent('en', 'body', e.target.value)}
+                      className="input-luxury"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Body (Arabic)</Label>
+                    <Textarea
+                      value={selectedPopup.content?.ar?.body || ''}
+                      onChange={(e) => updatePopupContent('ar', 'body', e.target.value)}
+                      className="input-luxury"
+                      dir="rtl"
+                    />
+                  </div>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Full editing capabilities coming soon. This is a preview of the CMS
-                  interface.
-                </p>
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button variant="outline" onClick={() => { setSelectedPopup(null); setIsCreating(false); }}>
+                    Cancel
+                  </Button>
+                  <Button onClick={savePopup} disabled={saving || !selectedPopup.name.trim()}>
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                    {isCreating ? 'Create' : 'Save'}
+                  </Button>
+                </div>
               </div>
             )}
           </DialogContent>
