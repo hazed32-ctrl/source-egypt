@@ -24,7 +24,7 @@ import { useApiAuth } from '@/contexts/ApiAuthContext';
 import { UserRole } from '@/lib/api/types';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import sourceLogo from '@/assets/logo-b-secondary.svg';
+import { useBrandAssets } from '@/hooks/useBrandAssets';
 
 interface PortalLayoutProps {
   children: ReactNode;

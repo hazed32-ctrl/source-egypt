@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import sourceLogo from '@/assets/logo-b-secondary.svg';
+import { useBrandAssets } from '@/hooks/useBrandAssets';
 
 const PHONE_NUMBER = '+201036786432';
 const DISPLAY_PHONE = '+20 103 678 6432';
