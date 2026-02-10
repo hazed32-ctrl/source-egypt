@@ -50,9 +50,9 @@ serve(async (req) => {
       );
     }
 
-    // Create Supabase client
+    // Create Supabase client with anon key to respect RLS policies
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Fetch properties
