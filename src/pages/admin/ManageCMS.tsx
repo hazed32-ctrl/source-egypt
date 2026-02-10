@@ -188,7 +188,61 @@ const ManageCMS = () => {
     toast({ title: 'Success', description: 'Popup status updated' });
   };
 
-  return (
+  const openCreatePopup = () => {
+    setSelectedPopup({ ...emptyPopup });
+    setIsCreating(true);
+  };
+
+  const savePopup = async () => {
+    if (!selectedPopup) return;
+    setSaving(true);
+    try {
+      const payload = {
+        name: selectedPopup.name,
+        content: selectedPopup.content as any,
+        image_url: selectedPopup.image_url,
+        trigger: selectedPopup.trigger,
+        trigger_value: selectedPopup.trigger_value,
+        show_once: selectedPopup.show_once,
+        is_active: selectedPopup.is_active,
+      };
+
+      if (isCreating) {
+        const { data, error } = await supabase.from('cms_popups').insert(payload).select().single();
+        if (error) throw error;
+        const typed = { ...data, content: data.content as CMSPopupRow['content'] };
+        setPopups([...popups, typed]);
+        toast({ title: 'Success', description: 'Popup created' });
+      } else {
+        const { error } = await supabase.from('cms_popups').update(payload).eq('id', selectedPopup.id);
+        if (error) throw error;
+        setPopups(popups.map((p) => (p.id === selectedPopup.id ? { ...p, ...payload, content: payload.content as CMSPopupRow['content'] } : p)));
+        toast({ title: 'Success', description: 'Popup updated' });
+      }
+      setSelectedPopup(null);
+      setIsCreating(false);
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updatePopupField = (field: string, value: any) => {
+    if (!selectedPopup) return;
+    setSelectedPopup({ ...selectedPopup, [field]: value });
+  };
+
+  const updatePopupContent = (lang: 'en' | 'ar', field: string, value: string) => {
+    if (!selectedPopup) return;
+    setSelectedPopup({
+      ...selectedPopup,
+      content: {
+        ...selectedPopup.content,
+        [lang]: { ...selectedPopup.content[lang], [field]: value },
+      },
+    });
+  };
     <PortalLayout role="admin">
       <div className="space-y-6">
         {/* Header */}
