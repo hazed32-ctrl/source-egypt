@@ -162,7 +162,4 @@ export const mockSyncApi = {
   },
 };
 
-// Log mock mode status
-if (IS_MOCK_MODE) {
-  console.log('[Mock Handlers] Mock API handlers loaded');
-}
+// Mock handlers kept for CMS/Sync pages not yet migrated
