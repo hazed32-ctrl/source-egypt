@@ -34,6 +34,7 @@ const Footer = () => {
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isAr = i18n.language === 'ar';
+  const { brandLogoUrl } = useBrandAssets();
 
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
