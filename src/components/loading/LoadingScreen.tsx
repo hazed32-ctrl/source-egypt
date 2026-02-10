@@ -7,7 +7,7 @@ interface LoadingScreenProps {
   minDuration?: number;
 }
 
-const LoadingScreen = ({ isLoading, minDuration = 800 }: LoadingScreenProps) => {
+const LoadingScreen = ({ isLoading, minDuration = 300 }: LoadingScreenProps) => {
   const [showLoader, setShowLoader] = useState(isLoading);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const startTimeRef = useRef<number>(Date.now());

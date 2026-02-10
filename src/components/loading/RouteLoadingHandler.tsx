@@ -17,7 +17,7 @@ const RouteLoadingHandler = () => {
       const handleLoad = () => {
         setTimeout(() => {
           stopLoading();
-        }, 500);
+        }, 200);
       };
 
       if (document.readyState === 'complete') {
@@ -37,7 +37,7 @@ const RouteLoadingHandler = () => {
       // Stop loading after content renders
       const timer = setTimeout(() => {
         stopLoading();
-      }, 400);
+      }, 150);
 
       prevPathname.current = location.pathname;
       return () => clearTimeout(timer);
