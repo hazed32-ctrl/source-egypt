@@ -450,6 +450,109 @@ const ManageUsers = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Create User Dialog */}
+        <Dialog open={isCreateDialogOpen} onOpenChange={(open) => { if (!open) resetCreateForm(); else setIsCreateDialogOpen(true); }}>
+          <DialogContent className="glass-card border-border/30 sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="font-display text-xl flex items-center gap-2">
+                <UserPlus className="w-5 h-5 text-primary" />
+                Create New User
+              </DialogTitle>
+              <DialogDescription>
+                Create a new user account. They will be able to log in immediately.
+              </DialogDescription>
+            </DialogHeader>
+
+            {createdTempPassword ? (
+              <div className="space-y-4 mt-4">
+                <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-primary">
+                    <CheckCircle className="w-5 h-5" />
+                    <span className="font-medium">User created successfully!</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    A temporary password was generated. Share it securely with the user — it will not be shown again.
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Input value={createdTempPassword} readOnly className="input-luxury font-mono text-sm" />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => {
+                        navigator.clipboard.writeText(createdTempPassword);
+                        toast({ title: 'Copied', description: 'Password copied to clipboard' });
+                      }}
+                    >
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button onClick={resetCreateForm} className="btn-gold">Done</Button>
+                </DialogFooter>
+              </div>
+            ) : (
+              <div className="space-y-4 mt-4">
+                <div>
+                  <Label>Email *</Label>
+                  <Input
+                    type="email"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    placeholder="user@example.com"
+                    className="input-luxury mt-1"
+                  />
+                </div>
+                <div>
+                  <Label>Full Name</Label>
+                  <Input
+                    value={newFullName}
+                    onChange={(e) => setNewFullName(e.target.value)}
+                    placeholder="John Doe"
+                    className="input-luxury mt-1"
+                  />
+                </div>
+                <div>
+                  <Label>Phone</Label>
+                  <Input
+                    value={newPhone}
+                    onChange={(e) => setNewPhone(e.target.value)}
+                    placeholder="+966 5XX XXX XXXX"
+                    className="input-luxury mt-1"
+                  />
+                </div>
+                <div>
+                  <Label>Role</Label>
+                  <Select value={newRole} onValueChange={(v) => setNewRole(v as AppRole)}>
+                    <SelectTrigger className="input-luxury mt-1"><SelectValue /></SelectTrigger>
+                    <SelectContent className="glass-card border-border/50">
+                      {allRoles.map((r) => (
+                        <SelectItem key={r} value={r}>{roleConfig[r].label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Password <span className="text-muted-foreground text-xs">(leave blank to auto-generate)</span></Label>
+                  <Input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Min 8 characters or leave blank"
+                    className="input-luxury mt-1"
+                  />
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={resetCreateForm}>Cancel</Button>
+                  <Button onClick={handleCreateUser} disabled={isSubmitting} className="btn-gold">
+                    {isSubmitting ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating...</>) : (<><UserPlus className="w-4 h-4 mr-2" />Create User</>)}
+                  </Button>
+                </DialogFooter>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </PortalLayout>
   );
