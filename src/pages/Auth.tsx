@@ -106,7 +106,7 @@ const Auth = () => {
       {/* Watermark Logo */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <motion.img
-          src={sourceLogo}
+          src={brandLogoUrl}
           alt=""
           className="w-[800px] h-[800px] opacity-[0.02] blur-[2px]"
           animate={{ 
