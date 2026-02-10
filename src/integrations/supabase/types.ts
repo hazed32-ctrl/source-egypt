@@ -611,7 +611,9 @@ export type Database = {
           price_delta_percent: number | null
           progress_percent: number | null
           progress_status: string | null
+          property_type: string | null
           status: string
+          tags: string[] | null
           title: string
           updated_at: string
         }
@@ -630,7 +632,9 @@ export type Database = {
           price_delta_percent?: number | null
           progress_percent?: number | null
           progress_status?: string | null
+          property_type?: string | null
           status?: string
+          tags?: string[] | null
           title: string
           updated_at?: string
         }
@@ -649,7 +653,9 @@ export type Database = {
           price_delta_percent?: number | null
           progress_percent?: number | null
           progress_status?: string | null
+          property_type?: string | null
           status?: string
+          tags?: string[] | null
           title?: string
           updated_at?: string
         }
