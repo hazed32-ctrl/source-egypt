@@ -265,6 +265,16 @@ const AppContent = () => {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/admin/google-sync"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <Suspense fallback={null}>
+                <GoogleSyncSettings />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        />
         
         {/* Language-prefixed routes */}
         <Route path="/en" element={<Navigate to="/" replace />} />
