@@ -88,8 +88,17 @@ const ManageUsers = () => {
   
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<ManagedUser | null>(null);
   const [editRole, setEditRole] = useState<AppRole>('client');
+  
+  // Create user form state
+  const [newEmail, setNewEmail] = useState('');
+  const [newFullName, setNewFullName] = useState('');
+  const [newPhone, setNewPhone] = useState('');
+  const [newRole, setNewRole] = useState<AppRole>('client');
+  const [newPassword, setNewPassword] = useState('');
+  const [createdTempPassword, setCreatedTempPassword] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUsers();
