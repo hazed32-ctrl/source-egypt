@@ -147,7 +147,7 @@ const PortalLayout = ({ children, title, subtitle, role }: PortalLayoutProps) =>
       {/* Watermark */}
       <div className="fixed inset-0 flex items-center justify-center pointer-events-none">
         <img
-          src={sourceLogo}
+          src={brandLogoUrl}
           alt=""
           className="w-[400px] h-[400px] md:w-[600px] md:h-[600px] opacity-[0.015] blur-[1px]"
         />
