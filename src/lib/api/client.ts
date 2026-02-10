@@ -4,7 +4,7 @@
  */
 
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
-import { getApiUrl, API_TIMEOUT, IS_MOCK_MODE } from './config';
+import { getApiUrl, API_TIMEOUT } from './config';
 import { ApiError, AuthTokens } from './types';
 
 // Token storage keys
