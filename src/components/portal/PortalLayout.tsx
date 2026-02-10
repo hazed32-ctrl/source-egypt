@@ -24,7 +24,7 @@ import { useApiAuth } from '@/contexts/ApiAuthContext';
 import { UserRole } from '@/lib/api/types';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import sourceLogo from '@/assets/logo-b-secondary.svg';
+import { useBrandAssets } from '@/hooks/useBrandAssets';
 
 interface PortalLayoutProps {
   children: ReactNode;
@@ -74,6 +74,7 @@ const PortalLayout = ({ children, title, subtitle, role }: PortalLayoutProps) =>
   const navigate = useNavigate();
   const { signOut, user, isAdmin, isAgent } = useApiAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { brandLogoUrl } = useBrandAssets();
 
   // Determine nav items based on role prop or user's actual role
   const getNavItems = () => {
@@ -146,7 +147,7 @@ const PortalLayout = ({ children, title, subtitle, role }: PortalLayoutProps) =>
       {/* Watermark */}
       <div className="fixed inset-0 flex items-center justify-center pointer-events-none">
         <img
-          src={sourceLogo}
+          src={brandLogoUrl}
           alt=""
           className="w-[400px] h-[400px] md:w-[600px] md:h-[600px] opacity-[0.015] blur-[1px]"
         />
@@ -168,7 +169,7 @@ const PortalLayout = ({ children, title, subtitle, role }: PortalLayoutProps) =>
               </Button>
 
               <Link to="/" className="flex items-center gap-3">
-                <img src={sourceLogo} alt="Source" className="h-8 md:h-10 w-auto" />
+                <img src={brandLogoUrl} alt="Source" className="h-8 md:h-10 w-auto" />
               </Link>
 
               <div className="flex items-center gap-2 md:gap-6">

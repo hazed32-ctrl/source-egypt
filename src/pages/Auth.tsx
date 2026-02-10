@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { z } from 'zod';
-import sourceLogo from '@/assets/logo-b-secondary.svg';
+import { useBrandAssets } from '@/hooks/useBrandAssets';
 import ForgotPasswordModal from '@/components/auth/ForgotPasswordModal';
 
 const loginSchema = z.object({
@@ -29,6 +29,7 @@ const Auth = () => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const { signIn, user, isLoading: authLoading } = useApiAuth();
   const navigate = useNavigate();
+  const { brandLogoUrl } = useBrandAssets();
 
   const getDashboardPath = (role?: string) => {
     if (role === 'admin' || role === 'super_admin') return '/admin/dashboard';
@@ -105,7 +106,7 @@ const Auth = () => {
       {/* Watermark Logo */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <motion.img
-          src={sourceLogo}
+          src={brandLogoUrl}
           alt=""
           className="w-[800px] h-[800px] opacity-[0.02] blur-[2px]"
           animate={{ 
@@ -132,7 +133,7 @@ const Auth = () => {
             transition={{ delay: 0.2 }}
           >
             <img 
-              src={sourceLogo} 
+              src={brandLogoUrl} 
               alt="Source" 
               className="h-16 w-auto"
             />

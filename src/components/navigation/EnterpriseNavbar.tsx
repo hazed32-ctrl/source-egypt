@@ -27,7 +27,7 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { useCompare } from '@/contexts/CompareContext';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import sourceLogo from '@/assets/logo-a-navbar.svg';
+import { useBrandAssets } from '@/hooks/useBrandAssets';
 import MegaMenu from './MegaMenu';
 import MobileDrawer from './MobileDrawer';
 import QuickSearch from './QuickSearch';
@@ -43,6 +43,7 @@ export const EnterpriseNavbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { navigation, getLabel, isLoading: navLoading } = useNavigation();
+  const { navLogoUrl, navLogoHeightDesktop, navLogoHeightMobile, navLogoMaxWidth } = useBrandAssets();
   
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openMegaMenu, setOpenMegaMenu] = useState<string | null>(null);
@@ -127,12 +128,22 @@ export const EnterpriseNavbar = () => {
               {/* Left: Logo */}
               <Link to="/" className="flex-shrink-0 py-2 px-3.5">
                 <motion.img
-                  src={sourceLogo}
+                  data-nav-logo=""
+                  src={navLogoUrl}
                   alt="Source"
-                  className="w-auto h-[clamp(38px,5vw,54px)]"
+                  className="w-auto object-contain"
+                  style={{
+                    height: `${navLogoHeightMobile}px`,
+                    maxWidth: `${navLogoMaxWidth}px`,
+                  }}
                   whileHover={{ scale: 1.02 }}
                   transition={{ duration: 0.2 }}
                 />
+                <style>{`
+                  @media (min-width: 768px) {
+                    [data-nav-logo] { height: ${navLogoHeightDesktop}px !important; }
+                  }
+                `}</style>
               </Link>
 
               {/* Center: Desktop Navigation */}

@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import sourceLogo from '@/assets/logo-b-secondary.svg';
+import { useBrandAssets } from '@/hooks/useBrandAssets';
 
 const PHONE_NUMBER = '+201036786432';
 const DISPLAY_PHONE = '+20 103 678 6432';
@@ -34,6 +34,7 @@ const Footer = () => {
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isAr = i18n.language === 'ar';
+  const { brandLogoUrl } = useBrandAssets();
 
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,7 +95,7 @@ const Footer = () => {
           {/* Brand Column */}
           <div className="space-y-6">
             <Link to="/" className="flex items-center gap-3">
-              <img src={sourceLogo} alt="Source" className="h-16 w-auto" />
+              <img src={brandLogoUrl} alt="Source" className="h-16 w-auto" />
             </Link>
             <p className="text-muted-foreground leading-relaxed">
               {t('footer.brandDescription')}
