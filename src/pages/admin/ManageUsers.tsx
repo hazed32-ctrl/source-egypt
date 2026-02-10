@@ -315,6 +315,10 @@ const ManageUsers = () => {
               className="input-luxury pl-12"
             />
           </div>
+          <Button onClick={() => setIsCreateDialogOpen(true)} className="btn-gold">
+            <UserPlus className="w-4 h-4 mr-2" />
+            Create User
+          </Button>
         </div>
 
         {isLoading ? (
