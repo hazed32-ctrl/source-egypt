@@ -243,6 +243,8 @@ const ManageCMS = () => {
       },
     });
   };
+
+  return (
     <PortalLayout role="admin">
       <div className="space-y-6">
         {/* Header */}
