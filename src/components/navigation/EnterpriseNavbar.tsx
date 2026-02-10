@@ -128,12 +128,24 @@ export const EnterpriseNavbar = () => {
               {/* Left: Logo */}
               <Link to="/" className="flex-shrink-0 py-2 px-3.5">
                 <motion.img
-                  src={sourceLogo}
+                  src={navLogoUrl}
                   alt="Source"
-                  className="w-auto h-[clamp(38px,5vw,54px)]"
+                  style={{
+                    maxWidth: `${navLogoMaxWidth}px`,
+                  }}
+                  className="w-auto object-contain"
+                  style={{
+                    height: `${navLogoHeightMobile}px`,
+                    maxWidth: `${navLogoMaxWidth}px`,
+                  }}
                   whileHover={{ scale: 1.02 }}
                   transition={{ duration: 0.2 }}
                 />
+                <style>{`
+                  @media (min-width: 768px) {
+                    [data-nav-logo] { height: ${navLogoHeightDesktop}px !important; }
+                  }
+                `}</style>
               </Link>
 
               {/* Center: Desktop Navigation */}
