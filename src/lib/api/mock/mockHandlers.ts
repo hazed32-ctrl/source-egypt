@@ -4,7 +4,7 @@
  * NOTE: Only contains handlers still actively used by pages not yet migrated to Supabase.
  */
 
-import { IS_MOCK_MODE } from '../config';
+// Config import removed — mock mode no longer checked at runtime
 import {
   Property,
   PropertyListItem,
@@ -162,7 +162,4 @@ export const mockSyncApi = {
   },
 };
 
-// Log mock mode status
-if (IS_MOCK_MODE) {
-  console.log('[Mock Handlers] Mock API handlers loaded');
-}
+// Mock handlers kept for CMS/Sync pages not yet migrated

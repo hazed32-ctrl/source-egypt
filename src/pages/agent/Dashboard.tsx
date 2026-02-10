@@ -20,19 +20,29 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useApiAuth } from '@/contexts/ApiAuthContext';
-import { Property, PropertyStatus, mockPropertiesApi } from '@/lib/api';
+import { supabase } from '@/integrations/supabase/client';
 
-const statusConfig: Record<PropertyStatus, { label: string; color: string; icon: React.ElementType }> = {
+interface AgentProperty {
+  id: string;
+  title: string;
+  location: string | null;
+  image_url: string | null;
+  status: string;
+  created_at: string;
+}
+
+const statusConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   draft: { label: 'Draft', color: 'bg-secondary/50 text-foreground border-border/50', icon: Building2 },
   pending_approval: { label: 'Pending Approval', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', icon: Clock },
   published: { label: 'Published', color: 'bg-green-500/20 text-green-400 border-green-500/30', icon: CheckCircle2 },
+  under_construction: { label: 'Under Construction', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30', icon: Building2 },
   archived: { label: 'Archived', color: 'bg-red-500/20 text-red-400 border-red-500/30', icon: XCircle },
 };
 
 const AgentDashboard = () => {
   const navigate = useNavigate();
   const { user } = useApiAuth();
-  const [properties, setProperties] = useState<Property[]>([]);
+  const [properties, setProperties] = useState<AgentProperty[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -42,14 +52,18 @@ const AgentDashboard = () => {
   const fetchMyProperties = async () => {
     setLoading(true);
     try {
-      // In real app, would filter by submittedBy = current user
-      const response = await mockPropertiesApi.list({ limit: 100 });
-      // Filter to show agent's own submissions
-      const myProperties = response.data.filter(
-        (p) => p.status !== 'published' || true // Mock: show all for demo
-      );
-      // Convert PropertyListItem to Property format for display
-      setProperties(myProperties as unknown as Property[]);
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+
+      const { data, error } = await supabase
+        .from('properties')
+        .select('id, title, location, image_url, status, created_at')
+        .eq('created_by', authUser.id)
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+      setProperties(data || []);
     } catch (error) {
       console.error('Failed to fetch properties:', error);
     } finally {
@@ -63,6 +77,8 @@ const AgentDashboard = () => {
     pending: properties.filter((p) => p.status === 'pending_approval').length,
     published: properties.filter((p) => p.status === 'published').length,
   };
+
+  const getStatusConfig = (status: string) => statusConfig[status] || statusConfig.draft;
 
   return (
     <PortalLayout role="agent">
@@ -178,7 +194,7 @@ const AgentDashboard = () => {
             ) : (
               <div className="space-y-3">
                 {properties.slice(0, 5).map((property) => {
-                  const status = statusConfig[property.status];
+                  const status = getStatusConfig(property.status);
                   const StatusIcon = status.icon;
                   return (
                     <motion.div
@@ -190,17 +206,17 @@ const AgentDashboard = () => {
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-lg bg-secondary overflow-hidden">
                           <img
-                            src={property.media?.[0]?.url || '/placeholder.svg'}
-                            alt={property.translations?.en?.title}
+                            src={property.image_url || '/placeholder.svg'}
+                            alt={property.title}
                             className="w-full h-full object-cover"
                           />
                         </div>
                         <div>
                           <p className="font-medium text-foreground">
-                            {property.translations?.en?.title || 'Untitled'}
+                            {property.title}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {property.location?.area}, {property.location?.city}
+                            {property.location || 'No location'}
                           </p>
                         </div>
                       </div>

@@ -40,59 +40,17 @@ const CountUpStat = ({ value, suffix }: { value: number; suffix: string }) => {
   );
 };
 
-// Sample featured properties
-const featuredProperties = [
-  {
-    id: '1',
-    title: 'Palm Hills Residence',
-    location: 'New Cairo, Egypt',
-    price: 5500000,
-    salePrice: 4950000,
-    beds: 4,
-    baths: 3,
-    area: 280,
-    image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
-    status: 'available' as const,
-    tag: 'hot' as const,
-    constructionProgress: 85,
-  },
-  {
-    id: '2',
-    title: 'Marina Bay Penthouse',
-    location: 'North Coast, Egypt',
-    price: 12000000,
-    beds: 5,
-    baths: 4,
-    area: 450,
-    image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=80',
-    status: 'available' as const,
-    tag: 'new' as const,
-  },
-  {
-    id: '3',
-    title: 'Garden View Villa',
-    location: '6th October City, Egypt',
-    price: 8500000,
-    beds: 5,
-    baths: 4,
-    area: 380,
-    image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80',
-    status: 'reserved' as const,
-    constructionProgress: 100,
-  },
-  {
-    id: '4',
-    title: 'Skyline Apartment',
-    location: 'Zamalek, Cairo',
-    price: 3200000,
-    beds: 3,
-    baths: 2,
-    area: 180,
-    image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80',
-    status: 'available' as const,
-    tag: 'bestValue' as const,
-  },
-];
+interface FeaturedProperty {
+  id: string;
+  title: string;
+  location: string;
+  price: number;
+  beds: number;
+  baths: number;
+  area: number;
+  image: string;
+  status: 'available' | 'reserved' | 'sold';
+}
 
 const statIcons = [Building2, Users, Award, TrendingUp];
 
@@ -107,6 +65,7 @@ const Index = () => {
   const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hero, setHero] = useState<HeroContent>(defaultHeroContent);
+  const [featuredProperties, setFeaturedProperties] = useState<FeaturedProperty[]>([]);
   const [leadForm, setLeadForm] = useState({
     name: '',
     email: '',
@@ -115,6 +74,7 @@ const Index = () => {
   });
 
   useEffect(() => {
+    // Fetch CMS hero
     supabase
       .from('settings')
       .select('value')
@@ -126,6 +86,37 @@ const Index = () => {
             setHero({ ...defaultHeroContent, ...JSON.parse(data.value) });
           } catch { /* keep defaults */ }
         }
+      });
+
+    // Fetch featured properties from Supabase
+    supabase
+      .from('properties')
+      .select('id, title, location, price, beds, baths, area, image_url, status')
+      .order('created_at', { ascending: false })
+      .limit(4)
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('Failed to fetch featured properties:', error);
+          return;
+        }
+        const mapStatus = (s: string): 'available' | 'reserved' | 'sold' => {
+          if (s === 'reserved' || s === 'pending') return 'reserved';
+          if (s === 'sold' || s === 'archived') return 'sold';
+          return 'available';
+        };
+        setFeaturedProperties(
+          (data || []).map((p) => ({
+            id: p.id,
+            title: p.title,
+            location: p.location || '',
+            price: p.price || 0,
+            beds: p.beds || 0,
+            baths: p.baths || 0,
+            area: p.area || 0,
+            image: p.image_url || '/placeholder.svg',
+            status: mapStatus(p.status),
+          }))
+        );
       });
   }, []);
 
@@ -279,11 +270,17 @@ const Index = () => {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredProperties.map((property) => (
-              <PropertyCard key={property.id} {...property} />
-            ))}
-          </div>
+          {featuredProperties.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {featuredProperties.map((property) => (
+                <PropertyCard key={property.id} {...property} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-muted-foreground">
+              No properties available yet.
+            </div>
+          )}
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}

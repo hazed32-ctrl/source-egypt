@@ -30,4 +30,4 @@ export const RETRY_CONFIG = {
   retryStatusCodes: [408, 429, 500, 502, 503, 504],
 };
 
-console.log(`[API Config] Mode: ${IS_MOCK_MODE ? 'MOCK' : 'LIVE'}, Base URL: ${API_BASE_URL || 'N/A'}`);
+// Config loaded

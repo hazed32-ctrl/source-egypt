@@ -12,11 +12,10 @@ import {
   Edit2,
   Send,
   Eye,
-  Trash2,
   Filter,
 } from 'lucide-react';
 import PortalLayout from '@/components/portal/PortalLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -36,23 +35,36 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { PropertyListItem, PropertyStatus, mockPropertiesApi } from '@/lib/api';
+import { supabase } from '@/integrations/supabase/client';
 
-const statusConfig: Record<PropertyStatus, { label: string; color: string }> = {
+interface AgentPropertyItem {
+  id: string;
+  title: string;
+  location: string | null;
+  price: number | null;
+  beds: number | null;
+  baths: number | null;
+  area: number | null;
+  image_url: string | null;
+  status: string;
+}
+
+const statusConfig: Record<string, { label: string; color: string }> = {
   draft: { label: 'Draft', color: 'bg-secondary/50 text-foreground border-border/50' },
   pending_approval: { label: 'Pending', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
   published: { label: 'Published', color: 'bg-green-500/20 text-green-400 border-green-500/30' },
+  under_construction: { label: 'Under Construction', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
   archived: { label: 'Archived', color: 'bg-red-500/20 text-red-400 border-red-500/30' },
 };
 
 const AgentProperties = () => {
   const { toast } = useToast();
-  const [properties, setProperties] = useState<PropertyListItem[]>([]);
+  const [properties, setProperties] = useState<AgentPropertyItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<PropertyStatus | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
-  const [selectedProperty, setSelectedProperty] = useState<PropertyListItem | null>(null);
+  const [selectedProperty, setSelectedProperty] = useState<AgentPropertyItem | null>(null);
 
   useEffect(() => {
     fetchProperties();
@@ -61,8 +73,17 @@ const AgentProperties = () => {
   const fetchProperties = async () => {
     setLoading(true);
     try {
-      const response = await mockPropertiesApi.list({ limit: 100 });
-      setProperties(response.data);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('properties')
+        .select('id, title, location, price, beds, baths, area, image_url, status')
+        .eq('created_by', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setProperties(data || []);
     } catch (error) {
       toast({
         title: 'Error',
@@ -78,10 +99,16 @@ const AgentProperties = () => {
     if (!selectedProperty) return;
 
     try {
-      await mockPropertiesApi.submitForApproval(selectedProperty.id);
+      const { error } = await supabase
+        .from('properties')
+        .update({ status: 'pending_approval' })
+        .eq('id', selectedProperty.id);
+
+      if (error) throw error;
+
       setProperties(
         properties.map((p) =>
-          p.id === selectedProperty.id ? { ...p, status: 'pending_approval' as PropertyStatus } : p
+          p.id === selectedProperty.id ? { ...p, status: 'pending_approval' } : p
         )
       );
       setSubmitDialogOpen(false);
@@ -112,6 +139,8 @@ const AgentProperties = () => {
       maximumFractionDigits: 0,
     }).format(price);
   };
+
+  const getStatusConfig = (status: string) => statusConfig[status] || statusConfig.draft;
 
   return (
     <PortalLayout role="agent">
@@ -147,7 +176,7 @@ const AgentProperties = () => {
               </div>
               <Select
                 value={statusFilter}
-                onValueChange={(v) => setStatusFilter(v as PropertyStatus | 'all')}
+                onValueChange={(v) => setStatusFilter(v)}
               >
                 <SelectTrigger className="w-[180px] input-luxury">
                   <Filter className="w-4 h-4 mr-2" />
@@ -155,9 +184,9 @@ const AgentProperties = () => {
                 </SelectTrigger>
                 <SelectContent className="glass-card border-border/50">
                   <SelectItem value="all">All Statuses</SelectItem>
-                  {(Object.keys(statusConfig) as PropertyStatus[]).map((status) => (
-                    <SelectItem key={status} value={status}>
-                      {statusConfig[status].label}
+                  {Object.entries(statusConfig).map(([key, cfg]) => (
+                    <SelectItem key={key} value={key}>
+                      {cfg.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -178,70 +207,73 @@ const AgentProperties = () => {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProperties.map((property, index) => (
-              <motion.div
-                key={property.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <Card className="glass-card border-border/30 overflow-hidden group">
-                  <div className="relative aspect-[4/3]">
-                    <img
-                      src={property.imageUrl || '/placeholder.svg'}
-                      alt={property.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <Badge
-                      className={`absolute top-3 right-3 ${statusConfig[property.status].color}`}
-                    >
-                      {statusConfig[property.status].label}
-                    </Badge>
-                  </div>
-                  <CardContent className="p-4">
-                    <h3 className="font-medium text-foreground mb-1 line-clamp-1">
-                      {property.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground mb-2">{property.location}</p>
-                    <p className="text-primary font-semibold mb-4">
-                      {formatPrice(property.price, property.currency)}
-                    </p>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-                      <span>{property.bedrooms} beds</span>
-                      <span>•</span>
-                      <span>{property.bathrooms} baths</span>
-                      <span>•</span>
-                      <span>{property.area} sqm</span>
+            {filteredProperties.map((property, index) => {
+              const sc = getStatusConfig(property.status);
+              return (
+                <motion.div
+                  key={property.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <Card className="glass-card border-border/30 overflow-hidden group">
+                    <div className="relative aspect-[4/3]">
+                      <img
+                        src={property.image_url || '/placeholder.svg'}
+                        alt={property.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <Badge
+                        className={`absolute top-3 right-3 ${sc.color}`}
+                      >
+                        {sc.label}
+                      </Badge>
                     </div>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline" className="flex-1 border-border/50">
-                        <Edit2 className="w-4 h-4 mr-1" />
-                        Edit
-                      </Button>
-                      {property.status === 'draft' && (
-                        <Button
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => {
-                            setSelectedProperty(property);
-                            setSubmitDialogOpen(true);
-                          }}
-                        >
-                          <Send className="w-4 h-4 mr-1" />
-                          Submit
-                        </Button>
-                      )}
-                      {property.status === 'published' && (
+                    <CardContent className="p-4">
+                      <h3 className="font-medium text-foreground mb-1 line-clamp-1">
+                        {property.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground mb-2">{property.location || 'No location'}</p>
+                      <p className="text-primary font-semibold mb-4">
+                        {property.price ? formatPrice(property.price) : 'Price TBD'}
+                      </p>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+                        <span>{property.beds ?? 0} beds</span>
+                        <span>•</span>
+                        <span>{property.baths ?? 0} baths</span>
+                        <span>•</span>
+                        <span>{property.area ?? 0} sqm</span>
+                      </div>
+                      <div className="flex gap-2">
                         <Button size="sm" variant="outline" className="flex-1 border-border/50">
-                          <Eye className="w-4 h-4 mr-1" />
-                          View
+                          <Edit2 className="w-4 h-4 mr-1" />
+                          Edit
                         </Button>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+                        {property.status === 'draft' && (
+                          <Button
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => {
+                              setSelectedProperty(property);
+                              setSubmitDialogOpen(true);
+                            }}
+                          >
+                            <Send className="w-4 h-4 mr-1" />
+                            Submit
+                          </Button>
+                        )}
+                        {property.status === 'published' && (
+                          <Button size="sm" variant="outline" className="flex-1 border-border/50">
+                            <Eye className="w-4 h-4 mr-1" />
+                            View
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
           </div>
         )}
 
