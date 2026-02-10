@@ -163,7 +163,3 @@ export const uploadFile = async <T>(url: string, file: File, additionalData?: Re
   return response.data.data;
 };
 
-// Log current mode
-if (IS_MOCK_MODE) {
-  console.log('[API Client] Running in MOCK mode - API calls will be intercepted by mock handlers');
-}
