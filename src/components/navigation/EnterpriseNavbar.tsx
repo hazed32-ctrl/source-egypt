@@ -43,6 +43,7 @@ export const EnterpriseNavbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { navigation, getLabel, isLoading: navLoading } = useNavigation();
+  const { navLogoUrl, navLogoHeightDesktop, navLogoHeightMobile, navLogoMaxWidth } = useBrandAssets();
   
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openMegaMenu, setOpenMegaMenu] = useState<string | null>(null);
