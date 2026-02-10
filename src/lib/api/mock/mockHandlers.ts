@@ -4,7 +4,7 @@
  * NOTE: Only contains handlers still actively used by pages not yet migrated to Supabase.
  */
 
-import { IS_MOCK_MODE } from '../config';
+// Config import removed — mock mode no longer checked at runtime
 import {
   Property,
   PropertyListItem,
