@@ -87,12 +87,27 @@ const sectionTypeLabels: Record<CMSSection['type'], string> = {
   custom: 'Custom HTML',
 };
 
+const emptyPopup: CMSPopupRow = {
+  id: '',
+  name: '',
+  content: { en: { title: '', body: '' }, ar: { title: '', body: '' } },
+  image_url: null,
+  trigger: 'delay',
+  trigger_value: 3000,
+  show_once: true,
+  is_active: false,
+  created_at: '',
+  updated_at: '',
+};
+
 const ManageCMS = () => {
   const { toast } = useToast();
   const [pages, setPages] = useState<CMSPageRow[]>([]);
   const [popups, setPopups] = useState<CMSPopupRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPopup, setSelectedPopup] = useState<CMSPopupRow | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetchData();
