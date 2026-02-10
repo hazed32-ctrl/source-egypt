@@ -16,6 +16,7 @@ import {
   GripVertical,
   Settings2,
   Sparkles,
+  Loader2,
 } from 'lucide-react';
 import HeroCMSEditor from '@/components/cms/HeroCMSEditor';
 import PortalLayout from '@/components/portal/PortalLayout';
@@ -34,7 +35,46 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { CMSPage, CMSPopup, CMSSection, mockCMSApi } from '@/lib/api';
+import { supabase } from '@/integrations/supabase/client';
+
+interface CMSSection {
+  id: string;
+  pageId: string;
+  type: 'hero' | 'features' | 'cta' | 'gallery' | 'text' | 'properties' | 'contact' | 'custom';
+  order: number;
+  isVisible: boolean;
+  content: { en: Record<string, unknown>; ar: Record<string, unknown> };
+  settings: Record<string, unknown>;
+}
+
+interface CMSPageRow {
+  id: string;
+  slug: string;
+  title_en: string;
+  title_ar: string;
+  meta_description_en: string | null;
+  meta_description_ar: string | null;
+  sections: CMSSection[];
+  is_published: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+interface CMSPopupRow {
+  id: string;
+  name: string;
+  content: {
+    en: { title: string; body: string; ctaText?: string; ctaUrl?: string };
+    ar: { title: string; body: string; ctaText?: string; ctaUrl?: string };
+  };
+  image_url: string | null;
+  trigger: string;
+  trigger_value: number | null;
+  show_once: boolean;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
 const sectionTypeLabels: Record<CMSSection['type'], string> = {
   hero: 'Hero Section',
@@ -49,11 +89,10 @@ const sectionTypeLabels: Record<CMSSection['type'], string> = {
 
 const ManageCMS = () => {
   const { toast } = useToast();
-  const [pages, setPages] = useState<CMSPage[]>([]);
-  const [popups, setPopups] = useState<CMSPopup[]>([]);
+  const [pages, setPages] = useState<CMSPageRow[]>([]);
+  const [popups, setPopups] = useState<CMSPopupRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedPage, setSelectedPage] = useState<CMSPage | null>(null);
-  const [selectedPopup, setSelectedPopup] = useState<CMSPopup | null>(null);
+  const [selectedPopup, setSelectedPopup] = useState<CMSPopupRow | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -62,16 +101,31 @@ const ManageCMS = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [pagesData, popupsData] = await Promise.all([
-        mockCMSApi.getPages(),
-        mockCMSApi.getPopups(),
+      const [pagesRes, popupsRes] = await Promise.all([
+        supabase.from('cms_pages').select('*').order('created_at'),
+        supabase.from('cms_popups').select('*').order('created_at'),
       ]);
-      setPages(pagesData);
-      setPopups(popupsData);
-    } catch (error) {
+
+      if (pagesRes.error) throw pagesRes.error;
+      if (popupsRes.error) throw popupsRes.error;
+
+      // Cast sections from Json to our typed array
+      const typedPages = (pagesRes.data || []).map((p: any) => ({
+        ...p,
+        sections: (p.sections || []) as CMSSection[],
+      }));
+
+      const typedPopups = (popupsRes.data || []).map((p: any) => ({
+        ...p,
+        content: (p.content || { en: { title: '', body: '' }, ar: { title: '', body: '' } }) as CMSPopupRow['content'],
+      }));
+
+      setPages(typedPages);
+      setPopups(typedPopups);
+    } catch (error: any) {
       toast({
         title: 'Error',
-        description: 'Failed to fetch CMS data',
+        description: error.message || 'Failed to fetch CMS data',
         variant: 'destructive',
       });
     } finally {
@@ -79,38 +133,44 @@ const ManageCMS = () => {
     }
   };
 
-  const toggleSectionVisibility = (pageId: string, sectionId: string) => {
-    setPages(
-      pages.map((page) => {
-        if (page.id === pageId) {
-          return {
-            ...page,
-            sections: page.sections.map((section) =>
-              section.id === sectionId
-                ? { ...section, isVisible: !section.isVisible }
-                : section
-            ),
-          };
-        }
-        return page;
-      })
+  const toggleSectionVisibility = async (pageId: string, sectionId: string) => {
+    const page = pages.find((p) => p.id === pageId);
+    if (!page) return;
+
+    const updatedSections = page.sections.map((section) =>
+      section.id === sectionId ? { ...section, isVisible: !section.isVisible } : section
     );
-    toast({
-      title: 'Success',
-      description: 'Section visibility updated',
-    });
+
+    const { error } = await supabase
+      .from('cms_pages')
+      .update({ sections: updatedSections as any })
+      .eq('id', pageId);
+
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      return;
+    }
+
+    setPages(pages.map((p) => (p.id === pageId ? { ...p, sections: updatedSections } : p)));
+    toast({ title: 'Success', description: 'Section visibility updated' });
   };
 
-  const togglePopupActive = (popupId: string) => {
-    setPopups(
-      popups.map((popup) =>
-        popup.id === popupId ? { ...popup, isActive: !popup.isActive } : popup
-      )
-    );
-    toast({
-      title: 'Success',
-      description: 'Popup status updated',
-    });
+  const togglePopupActive = async (popupId: string) => {
+    const popup = popups.find((p) => p.id === popupId);
+    if (!popup) return;
+
+    const { error } = await supabase
+      .from('cms_popups')
+      .update({ is_active: !popup.is_active })
+      .eq('id', popupId);
+
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      return;
+    }
+
+    setPopups(popups.map((p) => (p.id === popupId ? { ...p, is_active: !p.is_active } : p)));
+    toast({ title: 'Success', description: 'Popup status updated' });
   };
 
   return (
@@ -150,7 +210,11 @@ const ManageCMS = () => {
           {/* Pages Tab */}
           <TabsContent value="pages" className="space-y-4">
             {loading ? (
-              <div className="text-center py-8 text-muted-foreground">Loading...</div>
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              </div>
+            ) : pages.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">No pages configured yet.</div>
             ) : (
               pages.map((page) => (
                 <Card key={page.id} className="glass-card border-border/30">
@@ -158,16 +222,16 @@ const ManageCMS = () => {
                     <div className="flex items-center justify-between">
                       <CardTitle className="flex items-center gap-2">
                         <FileText className="w-5 h-5 text-primary" />
-                        {page.title.en}
+                        {page.title_en}
                         <Badge
                           variant="outline"
                           className={
-                            page.isPublished
+                            page.is_published
                               ? 'border-success/50 text-success'
                               : 'border-warning/50 text-warning'
                           }
                         >
-                          {page.isPublished ? 'Published' : 'Draft'}
+                          {page.is_published ? 'Published' : 'Draft'}
                         </Badge>
                       </CardTitle>
                       <div className="flex items-center gap-2">
@@ -207,7 +271,7 @@ const ManageCMS = () => {
                               <GripVertical className="w-4 h-4 text-muted-foreground cursor-grab" />
                               <Layout className="w-4 h-4 text-primary" />
                               <span className="font-medium text-foreground">
-                                {sectionTypeLabels[section.type]}
+                                {sectionTypeLabels[section.type] || section.type}
                               </span>
                               <Badge variant="outline" className="border-border/50">
                                 Order: {section.order}
@@ -254,17 +318,22 @@ const ManageCMS = () => {
           {/* Popups Tab */}
           <TabsContent value="popups" className="space-y-4">
             {loading ? (
-              <div className="text-center py-8 text-muted-foreground">Loading...</div>
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              </div>
             ) : (
               <div className="grid gap-4">
+                {popups.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">No popups configured yet.</div>
+                )}
                 {popups.map((popup) => (
                   <Card key={popup.id} className="glass-card border-border/30">
                     <CardContent className="pt-6">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                          {popup.imageUrl && (
+                          {popup.image_url && (
                             <img
-                              src={popup.imageUrl}
+                              src={popup.image_url}
                               alt={popup.name}
                               className="w-16 h-16 rounded-lg object-cover"
                             />
@@ -272,16 +341,16 @@ const ManageCMS = () => {
                           <div>
                             <h3 className="font-medium text-foreground">{popup.name}</h3>
                             <p className="text-sm text-muted-foreground">
-                              {popup.content.en.title}
+                              {popup.content?.en?.title || '—'}
                             </p>
                             <div className="flex items-center gap-2 mt-2">
                               <Badge variant="outline" className="border-border/50">
                                 Trigger: {popup.trigger}
-                                {popup.triggerValue &&
+                                {popup.trigger_value &&
                                   popup.trigger === 'delay' &&
-                                  ` (${popup.triggerValue}ms)`}
+                                  ` (${popup.trigger_value}ms)`}
                               </Badge>
-                              {popup.showOnce && (
+                              {popup.show_once && (
                                 <Badge variant="outline" className="border-border/50">
                                   Show Once
                                 </Badge>
@@ -292,10 +361,10 @@ const ManageCMS = () => {
                         <div className="flex items-center gap-3">
                           <div className="flex items-center gap-2">
                             <span className="text-sm text-muted-foreground">
-                              {popup.isActive ? 'Active' : 'Inactive'}
+                              {popup.is_active ? 'Active' : 'Inactive'}
                             </span>
                             <Switch
-                              checked={popup.isActive}
+                              checked={popup.is_active}
                               onCheckedChange={() => togglePopupActive(popup.id)}
                             />
                           </div>
@@ -333,7 +402,7 @@ const ManageCMS = () => {
                   <div className="space-y-2">
                     <Label>Title (English)</Label>
                     <Input
-                      value={selectedPopup.content.en.title}
+                      value={selectedPopup.content?.en?.title || ''}
                       className="input-luxury"
                       readOnly
                     />
@@ -341,7 +410,7 @@ const ManageCMS = () => {
                   <div className="space-y-2">
                     <Label>Title (Arabic)</Label>
                     <Input
-                      value={selectedPopup.content.ar.title}
+                      value={selectedPopup.content?.ar?.title || ''}
                       className="input-luxury"
                       dir="rtl"
                       readOnly
@@ -351,7 +420,7 @@ const ManageCMS = () => {
                 <div className="space-y-2">
                   <Label>Body (English)</Label>
                   <Textarea
-                    value={selectedPopup.content.en.body}
+                    value={selectedPopup.content?.en?.body || ''}
                     className="input-luxury"
                     readOnly
                   />

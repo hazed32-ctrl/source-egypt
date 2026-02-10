@@ -4,7 +4,7 @@
  */
 
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
-import { getApiUrl, API_TIMEOUT, IS_MOCK_MODE } from './config';
+import { getApiUrl, API_TIMEOUT } from './config';
 import { ApiError, AuthTokens } from './types';
 
 // Token storage keys
@@ -163,7 +163,3 @@ export const uploadFile = async <T>(url: string, file: File, additionalData?: Re
   return response.data.data;
 };
 
-// Log current mode
-if (IS_MOCK_MODE) {
-  console.log('[API Client] Running in MOCK mode - API calls will be intercepted by mock handlers');
-}

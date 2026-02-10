@@ -98,6 +98,90 @@ export type Database = {
         }
         Relationships: []
       }
+      cms_pages: {
+        Row: {
+          created_at: string
+          id: string
+          is_published: boolean
+          meta_description_ar: string | null
+          meta_description_en: string | null
+          sections: Json
+          slug: string
+          title_ar: string
+          title_en: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          meta_description_ar?: string | null
+          meta_description_en?: string | null
+          sections?: Json
+          slug: string
+          title_ar?: string
+          title_en: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          meta_description_ar?: string | null
+          meta_description_en?: string | null
+          sections?: Json
+          slug?: string
+          title_ar?: string
+          title_en?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cms_popups: {
+        Row: {
+          content: Json
+          created_at: string
+          end_date: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          show_once: boolean
+          start_date: string | null
+          trigger: string
+          trigger_value: number | null
+          updated_at: string
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          show_once?: boolean
+          start_date?: string | null
+          trigger?: string
+          trigger_value?: number | null
+          updated_at?: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          show_once?: boolean
+          start_date?: string | null
+          trigger?: string
+          trigger_value?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           created_at: string
@@ -830,6 +914,48 @@ export type Database = {
           key?: string
           updated_at?: string
           value?: string | null
+        }
+        Relationships: []
+      }
+      sync_logs: {
+        Row: {
+          created_at: string
+          errors: Json | null
+          finished_at: string | null
+          id: string
+          rows_failed: number
+          rows_processed: number
+          rows_updated: number
+          source: string
+          started_at: string
+          status: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          errors?: Json | null
+          finished_at?: string | null
+          id?: string
+          rows_failed?: number
+          rows_processed?: number
+          rows_updated?: number
+          source: string
+          started_at?: string
+          status?: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          errors?: Json | null
+          finished_at?: string | null
+          id?: string
+          rows_failed?: number
+          rows_processed?: number
+          rows_updated?: number
+          source?: string
+          started_at?: string
+          status?: string
+          type?: string
         }
         Relationships: []
       }
