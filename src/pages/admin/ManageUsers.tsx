@@ -16,6 +16,9 @@ import {
   Trash2,
   Save,
   AlertTriangle,
+  UserPlus,
+  Copy,
+  CheckCircle,
 } from 'lucide-react';
 import PortalLayout from '@/components/portal/PortalLayout';
 import { Button } from '@/components/ui/button';
@@ -85,8 +88,17 @@ const ManageUsers = () => {
   
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<ManagedUser | null>(null);
   const [editRole, setEditRole] = useState<AppRole>('client');
+  
+  // Create user form state
+  const [newEmail, setNewEmail] = useState('');
+  const [newFullName, setNewFullName] = useState('');
+  const [newPhone, setNewPhone] = useState('');
+  const [newRole, setNewRole] = useState<AppRole>('client');
+  const [newPassword, setNewPassword] = useState('');
+  const [createdTempPassword, setCreatedTempPassword] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -214,6 +226,68 @@ const ManageUsers = () => {
     }
   };
 
+  const handleCreateUser = async () => {
+    if (!newEmail || !newEmail.includes('@')) {
+      toast({ title: 'Error', description: 'Please enter a valid email', variant: 'destructive' });
+      return;
+    }
+
+    setIsSubmitting(true);
+    setCreatedTempPassword(null);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error('Not authenticated');
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-create-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            email: newEmail.trim(),
+            password: newPassword || undefined,
+            full_name: newFullName.trim() || undefined,
+            role: newRole,
+            phone: newPhone.trim() || undefined,
+          }),
+        }
+      );
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Failed to create user');
+
+      if (result.temporary_password) {
+        setCreatedTempPassword(result.temporary_password);
+      }
+
+      toast({ title: 'Success', description: `User ${newEmail} created successfully` });
+      await fetchUsers();
+
+      if (!result.temporary_password) {
+        resetCreateForm();
+      }
+    } catch (err: any) {
+      console.error('Error creating user:', err);
+      toast({ title: 'Error', description: err.message || 'Failed to create user', variant: 'destructive' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const resetCreateForm = () => {
+    setNewEmail('');
+    setNewFullName('');
+    setNewPhone('');
+    setNewRole('client');
+    setNewPassword('');
+    setCreatedTempPassword(null);
+    setIsCreateDialogOpen(false);
+  };
+
   const filteredUsers = users.filter((user) => {
     const query = searchQuery.toLowerCase();
     return (
@@ -241,6 +315,10 @@ const ManageUsers = () => {
               className="input-luxury pl-12"
             />
           </div>
+          <Button onClick={() => setIsCreateDialogOpen(true)} className="btn-gold">
+            <UserPlus className="w-4 h-4 mr-2" />
+            Create User
+          </Button>
         </div>
 
         {isLoading ? (
@@ -372,6 +450,109 @@ const ManageUsers = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Create User Dialog */}
+        <Dialog open={isCreateDialogOpen} onOpenChange={(open) => { if (!open) resetCreateForm(); else setIsCreateDialogOpen(true); }}>
+          <DialogContent className="glass-card border-border/30 sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="font-display text-xl flex items-center gap-2">
+                <UserPlus className="w-5 h-5 text-primary" />
+                Create New User
+              </DialogTitle>
+              <DialogDescription>
+                Create a new user account. They will be able to log in immediately.
+              </DialogDescription>
+            </DialogHeader>
+
+            {createdTempPassword ? (
+              <div className="space-y-4 mt-4">
+                <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-primary">
+                    <CheckCircle className="w-5 h-5" />
+                    <span className="font-medium">User created successfully!</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    A temporary password was generated. Share it securely with the user — it will not be shown again.
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Input value={createdTempPassword} readOnly className="input-luxury font-mono text-sm" />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => {
+                        navigator.clipboard.writeText(createdTempPassword);
+                        toast({ title: 'Copied', description: 'Password copied to clipboard' });
+                      }}
+                    >
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button onClick={resetCreateForm} className="btn-gold">Done</Button>
+                </DialogFooter>
+              </div>
+            ) : (
+              <div className="space-y-4 mt-4">
+                <div>
+                  <Label>Email *</Label>
+                  <Input
+                    type="email"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    placeholder="user@example.com"
+                    className="input-luxury mt-1"
+                  />
+                </div>
+                <div>
+                  <Label>Full Name</Label>
+                  <Input
+                    value={newFullName}
+                    onChange={(e) => setNewFullName(e.target.value)}
+                    placeholder="John Doe"
+                    className="input-luxury mt-1"
+                  />
+                </div>
+                <div>
+                  <Label>Phone</Label>
+                  <Input
+                    value={newPhone}
+                    onChange={(e) => setNewPhone(e.target.value)}
+                    placeholder="+966 5XX XXX XXXX"
+                    className="input-luxury mt-1"
+                  />
+                </div>
+                <div>
+                  <Label>Role</Label>
+                  <Select value={newRole} onValueChange={(v) => setNewRole(v as AppRole)}>
+                    <SelectTrigger className="input-luxury mt-1"><SelectValue /></SelectTrigger>
+                    <SelectContent className="glass-card border-border/50">
+                      {allRoles.map((r) => (
+                        <SelectItem key={r} value={r}>{roleConfig[r].label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Password <span className="text-muted-foreground text-xs">(leave blank to auto-generate)</span></Label>
+                  <Input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Min 8 characters or leave blank"
+                    className="input-luxury mt-1"
+                  />
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={resetCreateForm}>Cancel</Button>
+                  <Button onClick={handleCreateUser} disabled={isSubmitting} className="btn-gold">
+                    {isSubmitting ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Creating...</>) : (<><UserPlus className="w-4 h-4 mr-2" />Create User</>)}
+                  </Button>
+                </DialogFooter>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </PortalLayout>
   );
