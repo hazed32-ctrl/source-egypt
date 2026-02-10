@@ -226,6 +226,68 @@ const ManageUsers = () => {
     }
   };
 
+  const handleCreateUser = async () => {
+    if (!newEmail || !newEmail.includes('@')) {
+      toast({ title: 'Error', description: 'Please enter a valid email', variant: 'destructive' });
+      return;
+    }
+
+    setIsSubmitting(true);
+    setCreatedTempPassword(null);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error('Not authenticated');
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-create-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            email: newEmail.trim(),
+            password: newPassword || undefined,
+            full_name: newFullName.trim() || undefined,
+            role: newRole,
+            phone: newPhone.trim() || undefined,
+          }),
+        }
+      );
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Failed to create user');
+
+      if (result.temporary_password) {
+        setCreatedTempPassword(result.temporary_password);
+      }
+
+      toast({ title: 'Success', description: `User ${newEmail} created successfully` });
+      await fetchUsers();
+
+      if (!result.temporary_password) {
+        resetCreateForm();
+      }
+    } catch (err: any) {
+      console.error('Error creating user:', err);
+      toast({ title: 'Error', description: err.message || 'Failed to create user', variant: 'destructive' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const resetCreateForm = () => {
+    setNewEmail('');
+    setNewFullName('');
+    setNewPhone('');
+    setNewRole('client');
+    setNewPassword('');
+    setCreatedTempPassword(null);
+    setIsCreateDialogOpen(false);
+  };
+
   const filteredUsers = users.filter((user) => {
     const query = searchQuery.toLowerCase();
     return (
