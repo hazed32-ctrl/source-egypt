@@ -17,7 +17,7 @@ const RouteLoadingHandler = () => {
       const handleLoad = () => {
         setTimeout(() => {
           stopLoading();
-        }, 500);
+        }, 200);
       };
 
       if (document.readyState === 'complete') {
