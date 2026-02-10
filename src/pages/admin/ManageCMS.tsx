@@ -87,12 +87,27 @@ const sectionTypeLabels: Record<CMSSection['type'], string> = {
   custom: 'Custom HTML',
 };
 
+const emptyPopup: CMSPopupRow = {
+  id: '',
+  name: '',
+  content: { en: { title: '', body: '' }, ar: { title: '', body: '' } },
+  image_url: null,
+  trigger: 'delay',
+  trigger_value: 3000,
+  show_once: true,
+  is_active: false,
+  created_at: '',
+  updated_at: '',
+};
+
 const ManageCMS = () => {
   const { toast } = useToast();
   const [pages, setPages] = useState<CMSPageRow[]>([]);
   const [popups, setPopups] = useState<CMSPopupRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPopup, setSelectedPopup] = useState<CMSPopupRow | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -171,6 +186,62 @@ const ManageCMS = () => {
 
     setPopups(popups.map((p) => (p.id === popupId ? { ...p, is_active: !p.is_active } : p)));
     toast({ title: 'Success', description: 'Popup status updated' });
+  };
+
+  const openCreatePopup = () => {
+    setSelectedPopup({ ...emptyPopup });
+    setIsCreating(true);
+  };
+
+  const savePopup = async () => {
+    if (!selectedPopup) return;
+    setSaving(true);
+    try {
+      const payload = {
+        name: selectedPopup.name,
+        content: selectedPopup.content as any,
+        image_url: selectedPopup.image_url,
+        trigger: selectedPopup.trigger,
+        trigger_value: selectedPopup.trigger_value,
+        show_once: selectedPopup.show_once,
+        is_active: selectedPopup.is_active,
+      };
+
+      if (isCreating) {
+        const { data, error } = await supabase.from('cms_popups').insert(payload).select().single();
+        if (error) throw error;
+        const typed = { ...data, content: data.content as CMSPopupRow['content'] };
+        setPopups([...popups, typed]);
+        toast({ title: 'Success', description: 'Popup created' });
+      } else {
+        const { error } = await supabase.from('cms_popups').update(payload).eq('id', selectedPopup.id);
+        if (error) throw error;
+        setPopups(popups.map((p) => (p.id === selectedPopup.id ? { ...p, ...payload, content: payload.content as CMSPopupRow['content'] } : p)));
+        toast({ title: 'Success', description: 'Popup updated' });
+      }
+      setSelectedPopup(null);
+      setIsCreating(false);
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updatePopupField = (field: string, value: any) => {
+    if (!selectedPopup) return;
+    setSelectedPopup({ ...selectedPopup, [field]: value });
+  };
+
+  const updatePopupContent = (lang: 'en' | 'ar', field: string, value: string) => {
+    if (!selectedPopup) return;
+    setSelectedPopup({
+      ...selectedPopup,
+      content: {
+        ...selectedPopup.content,
+        [lang]: { ...selectedPopup.content[lang], [field]: value },
+      },
+    });
   };
 
   return (
@@ -381,7 +452,7 @@ const ManageCMS = () => {
                   </Card>
                 ))}
 
-                <Button className="gap-2">
+                <Button className="gap-2" onClick={openCreatePopup}>
                   <Plus className="w-4 h-4" />
                   Create New Popup
                 </Button>
@@ -390,45 +461,70 @@ const ManageCMS = () => {
           </TabsContent>
         </Tabs>
 
-        {/* Popup Edit Dialog */}
-        <Dialog open={!!selectedPopup} onOpenChange={() => setSelectedPopup(null)}>
+        {/* Popup Create/Edit Dialog */}
+        <Dialog open={!!selectedPopup} onOpenChange={(open) => { if (!open) { setSelectedPopup(null); setIsCreating(false); } }}>
           <DialogContent className="glass-card border-border/50 max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Edit Popup</DialogTitle>
+              <DialogTitle>{isCreating ? 'Create Popup' : 'Edit Popup'}</DialogTitle>
             </DialogHeader>
             {selectedPopup && (
               <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Popup Name</Label>
+                  <Input
+                    value={selectedPopup.name}
+                    onChange={(e) => updatePopupField('name', e.target.value)}
+                    placeholder="e.g. Welcome Offer"
+                    className="input-luxury"
+                  />
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Title (English)</Label>
                     <Input
                       value={selectedPopup.content?.en?.title || ''}
+                      onChange={(e) => updatePopupContent('en', 'title', e.target.value)}
                       className="input-luxury"
-                      readOnly
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Title (Arabic)</Label>
                     <Input
                       value={selectedPopup.content?.ar?.title || ''}
+                      onChange={(e) => updatePopupContent('ar', 'title', e.target.value)}
                       className="input-luxury"
                       dir="rtl"
-                      readOnly
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>Body (English)</Label>
-                  <Textarea
-                    value={selectedPopup.content?.en?.body || ''}
-                    className="input-luxury"
-                    readOnly
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Body (English)</Label>
+                    <Textarea
+                      value={selectedPopup.content?.en?.body || ''}
+                      onChange={(e) => updatePopupContent('en', 'body', e.target.value)}
+                      className="input-luxury"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Body (Arabic)</Label>
+                    <Textarea
+                      value={selectedPopup.content?.ar?.body || ''}
+                      onChange={(e) => updatePopupContent('ar', 'body', e.target.value)}
+                      className="input-luxury"
+                      dir="rtl"
+                    />
+                  </div>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Full editing capabilities coming soon. This is a preview of the CMS
-                  interface.
-                </p>
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button variant="outline" onClick={() => { setSelectedPopup(null); setIsCreating(false); }}>
+                    Cancel
+                  </Button>
+                  <Button onClick={savePopup} disabled={saving || !selectedPopup.name.trim()}>
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                    {isCreating ? 'Create' : 'Save'}
+                  </Button>
+                </div>
               </div>
             )}
           </DialogContent>
